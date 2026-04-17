@@ -1,8 +1,14 @@
 <?php
 session_start();
 
+require_once __DIR__ . '../../src/config/env.php';
+$host = $_ENV['DB_HOST'];
+$db   = $_ENV['DB_NAME'];
+$user = $_ENV['DB_USER'];
+$pass = $_ENV['DB_PASS'];
+
 try {
-    $conn = new PDO("mysql:host=localhost;dbname=oauth_demo", "root", "");
+    $conn = new PDO("mysql:host=$host;dbname=$db", "$user", "");
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
     if (

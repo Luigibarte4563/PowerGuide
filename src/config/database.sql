@@ -1,4 +1,4 @@
-CREATE DATABASE oauth_demo;
+CREATE DATABASE oauth_google;
 USE oauth_demo;
 
 CREATE TABLE users (

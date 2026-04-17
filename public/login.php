@@ -1,3 +1,7 @@
+<?php
+require_once __DIR__ . '/../src/config/env.php';
+$googleClientId = $_ENV['GOOGLE_CLIENT_ID'] ?? '';
+?>
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -61,7 +65,7 @@
       id="g_id_onload"
       data-auto_prompt="false"
       data-callback="handleCredentialResponse"
-      data-client_id="693655111723-8of9p12p0kk1ka153f2n3mffa0pu3ens.apps.googleusercontent.com"
+      data-client_id="<?= $googleClientId ?>" 
     ></div>
     <!-- g_id_signin places the button on a page and supports customization -->
     <div class="g_id_signin"></div>
