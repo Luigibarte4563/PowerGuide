@@ -1,16 +1,18 @@
 CREATE DATABASE oauth_google;
-USE google_demo;
+
+USE DATABASE oauth_google;
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-    google_id VARCHAR(100) UNIQUE,  -- from responsePayload.sub
+    name VARCHAR(150) NOT NULL,
+    email VARCHAR(150) UNIQUE NOT NULL,
 
-    name VARCHAR(150),
-    email VARCHAR(150) UNIQUE,
-    picture TEXT,
+    password VARCHAR(255) DEFAULT NULL,     -- for REGISTER users only
+    google_id VARCHAR(100) UNIQUE DEFAULT NULL, -- for GOOGLE users only
+    picture TEXT DEFAULT NULL,
 
-    provider VARCHAR(50) DEFAULT 'google',
+    auth_provider ENUM('local','google') NOT NULL DEFAULT 'local',
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

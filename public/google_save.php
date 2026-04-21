@@ -30,7 +30,7 @@ try {
             $stmt->execute([$name, $email, $picture, $google_id]);
         } else {
             // Insert new user
-            $insert = "INSERT INTO users (google_id, name, email, picture) VALUES (?,?,?,?)";
+            $insert = "INSERT INTO users (google_id, name, email, picture, auth_provider) VALUES (?,?,?,?, 'google')";
             $stmt = $conn->prepare($insert);
             $stmt->execute([$google_id, $name, $email, $picture]);
         }

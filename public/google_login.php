@@ -33,7 +33,7 @@ $googleClientId = $_ENV['GOOGLE_CLIENT_ID'] ?? '';
         formData.append("picture", responsePayload.picture);
         formData.append("sub", responsePayload.sub);
 
-        fetch("save.php", {
+        fetch("google_save.php", {
             method: "POST",
             body: formData
         })

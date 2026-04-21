@@ -23,3 +23,14 @@ $user = $_SESSION['user'];
 <a href="logout.php">logout</a>
 </body>
 </html>
+<script>
+    navigator.geolocation.getCurrentPosition(
+  (position) => {
+    console.log(position.coords.latitude);
+    console.log(position.coords.longitude);
+  },
+  (error) => {
+    console.log("Permission denied or error");
+  }
+);
+</script>
