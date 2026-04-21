@@ -7,8 +7,6 @@ if (!isset($_SESSION['user'])) {
 }
 
 $user = $_SESSION['user'];
-
-echo $user['picture'];
 ?>
 
 <!DOCTYPE html>

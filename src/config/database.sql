@@ -1,5 +1,5 @@
 CREATE DATABASE oauth_google;
-USE oauth_demo;
+USE google_demo;
 
 CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
