@@ -1,28 +1,39 @@
 <?php
-session_start();
-require_once _DIR_ . '/../src/config/connection.php';
 
-if(!isset($_SESSION['user'])) {
+session_start();
+
+require_once __DIR__ . '/../src/config/connection.php';
+
+if (!isset($_SESSION['user'])) {
+
     header("Location: logout.php");
     exit();
 }
 
 $conn = getConnection();
 
-$name = $_POST['name'];
-$email = $_POST['email'];
-$google_id = $_SESSION['user']['google_id'];
+$name = trim($_POST['name']);
+$email = trim($_POST['email']);
 
-$sql = "UPDATE users 
-        SET name = ?, email = ? 
-        WHERE google_id = ?";
+$user_id = $_SESSION['user']['id'];
+
+$sql = "UPDATE users
+        SET name = ?, email = ?
+        WHERE id = ?";
 
 $stmt = $conn->prepare($sql);
-$stmt->execute([$name, $email, $google_id]);
 
+$stmt->execute([
+    $name,
+    $email,
+    $user_id
+]);
+
+// update session
 $_SESSION['user']['name'] = $name;
 $_SESSION['user']['email'] = $email;
 
 header("Location: dashboard.php");
 exit();
+
 ?>

@@ -37,7 +37,7 @@ $picture = !empty($user['picture'])
 <a href="logout.php">logout</a>
 
 <h2>Edit Profile</h2>
-<form action="update_profile.php" method="POST">
+<form action="udpate_profile.php" method="POST">
   <input type="text" name="name" value="<?= htmlspecialchars($user['name'])?>" require><br><br>
 
   <input type="email" name="email" value="<?= htmlspecialchars($user['email'])?>" require><br><br>
