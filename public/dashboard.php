@@ -19,7 +19,28 @@ $user = $_SESSION['user'];
 <body>
 
 <h1>Welcome <?php echo $user['name']; ?></h1>
-<img src="<?php echo htmlspecialchars($user['picture']); ?>" width="100" alt="Profile Picture">
+<img src="<?php echo htmlspecialchars($user['picture']); ?>" width="100" alt="Profile Picture"><br>
 <a href="logout.php">logout</a>
+
+<h2>Edit Profile</h2>
+<form action="update_profile.php" method="POST">
+  <input type="text" name="name" value="<?= htmlspecialchars($user['name'])?>" require><br><br>
+
+  <input type="email" name="email" value="<?= htmlspecialchars($user['email'])?>" require><br><br>
+
+  <button type="submit">Update Profile</button>
+  
+</form>
 </body>
 </html>
+<script>
+    navigator.geolocation.getCurrentPosition(
+  (position) => {
+    console.log(position.coords.latitude);
+    console.log(position.coords.longitude);
+  },
+  (error) => {
+    console.log("Permission denied or error");
+  }
+);
+</script>

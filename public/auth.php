@@ -1,0 +1,104 @@
+<?php
+session_start();
+
+$page = $_GET['page'] ?? 'login'; // login or register
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Auth System</title>
+
+    <!-- <style>
+        body {
+            font-family: Arial;
+            background: #f2f2f2;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .box {
+            width: 360px;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #007bff;
+            border: none;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0056b3;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            color: blue;
+            text-decoration: none;
+        }
+
+        h2 {
+            text-align: center;
+        }
+    </style> -->
+</head>
+<body>
+
+<div class="box">
+
+<?php if ($page === 'login'): ?>
+
+    <!-- LOGIN FORM -->
+    <h2>Login</h2>
+
+    <form action="login.php" method="POST">
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="password" name="password" placeholder="Password" required><br>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <a href="auth.php?page=register">No account? Register here</a>
+
+<?php else: ?>
+
+    <!-- REGISTER FORM -->
+    <h2>Register</h2>
+
+    <form action="register.php" method="POST">
+        <input type="text" name="name" placeholder="Full Name" required><br>
+        <input type="email" name="email" placeholder="Email" required><br>
+        <input type="password" name="password" placeholder="Password" required><br>
+
+        <button type="submit">Register</button>
+    </form>
+
+    <a href="auth.php?page=login">Already have an account? Login</a>
+
+<?php endif; ?>
+
+</div>
+
+</body>
+</html>

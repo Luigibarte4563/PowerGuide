@@ -1,16 +1,10 @@
 <?php
 session_start();
 
-require_once __DIR__ . '../../src/config/env.php';
-$host = $_ENV['DB_HOST'];
-$db   = $_ENV['DB_NAME'];
-$user = $_ENV['DB_USER'];
-$pass = $_ENV['DB_PASS'];
+require_once __DIR__ . '/../src/config/connection.php';
+$conn = getConnection(); 
 
 try {
-    $conn = new PDO("mysql:host=$host;dbname=$db", "$user", "");
-    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
     if (
         isset($_POST['name']) &&
         isset($_POST['email']) &&
@@ -36,7 +30,7 @@ try {
             $stmt->execute([$name, $email, $picture, $google_id]);
         } else {
             // Insert new user
-            $insert = "INSERT INTO users (google_id, name, email, picture) VALUES (?,?,?,?)";
+            $insert = "INSERT INTO users (google_id, name, email, picture, auth_provider) VALUES (?,?,?,?, 'google')";
             $stmt = $conn->prepare($insert);
             $stmt->execute([$google_id, $name, $email, $picture]);
         }
