@@ -19,7 +19,21 @@ $user = $_SESSION['user'];
 <body>
 
 <h1>Welcome <?php echo $user['name']; ?></h1>
-<img src="<?php echo htmlspecialchars($user['picture']); ?>" width="100" alt="Profile Picture"><br>
+<?php
+
+$defaultPicture = "https://media.newyorker.com/photos/59095bb86552fa0be682d9d0/master/pass/Monkey-Selfie.jpg";
+
+$picture = !empty($user['picture'])
+    ? $user['picture']
+    : $defaultPicture;
+
+?>
+
+<img 
+    src="<?= htmlspecialchars($picture) ?>" 
+    width="100" 
+    alt="Profile Picture"
+>
 <a href="logout.php">logout</a>
 
 <h2>Edit Profile</h2>
@@ -29,7 +43,7 @@ $user = $_SESSION['user'];
   <input type="email" name="email" value="<?= htmlspecialchars($user['email'])?>" require><br><br>
 
   <button type="submit">Update Profile</button>
-  
+
 </form>
 </body>
 </html>
