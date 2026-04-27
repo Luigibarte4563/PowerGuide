@@ -20,13 +20,11 @@ $user = $_SESSION['user'];
 
 <h1>Welcome <?php echo $user['name']; ?></h1>
 <?php
-
-$defaultPicture = "https://media.newyorker.com/photos/59095bb86552fa0be682d9d0/master/pass/Monkey-Selfie.jpg";
+$defaultPicture = "https://scontent.fbag1-2.fna.fbcdn.net/v/t1.15752-9/667329625_832141525960325_566936363299643684_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=9f807c&_nc_eui2=AeGVNNH2c8u51K63IMi0MSu2RzItqHBeNwBHMi2ocF43ABaDAgCZKeueIHBf0_X8eIXh4cOLIJq0NZeAK1v-ui0F&_nc_ohc=wKZjArz4WLsQ7kNvwF7_Xjy&_nc_oc=AdpO5bF0ZbJTP0mMdhRsIcNe9vvMkZ-eAviQkALDobFFkS1Ug66cGZF5i_c5mcQAyMI&_nc_zt=23&_nc_ht=scontent.fbag1-2.fna&oh=03_Q7cD5AHYLWeWKmt8bns7JfPWi5j1GmGMFUJk3R4gd4fKJKrFSQ&oe=6A125669";
 
 $picture = !empty($user['picture'])
     ? $user['picture']
     : $defaultPicture;
-
 ?>
 
 <img 
