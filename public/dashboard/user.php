@@ -32,10 +32,10 @@ $picture = !empty($user['picture'])
     width="100" 
     alt="Profile Picture"
 >
-<a href="logout.php">logout</a>
+<a href="../logout.php">logout</a>
 
 <h2>Edit Profile</h2>
-<form action="udpate_profile.php" method="POST">
+<form action="../auth/udpate_profile.php" method="POST">
   <input type="text" name="name" value="<?= htmlspecialchars($user['name'])?>" require><br><br>
 
   <input type="email" name="email" value="<?= htmlspecialchars($user['email'])?>" require><br><br>

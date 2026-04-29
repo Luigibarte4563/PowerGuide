@@ -10,7 +10,7 @@
     <title>Document</title>
 </head>
 <body>
-    <a href="google_login.php">google login</a><br>
-    <a href="auth.php">login</a>
+    <a href="auth/google_login.php">google login</a><br>
+    <a href="auth/auth.php">login</a>
 </body>
 </html>

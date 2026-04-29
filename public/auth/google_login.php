@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../src/config/env.php';
+require_once __DIR__ . '/../../src/config/env.php';
 $googleClientId = $_ENV['GOOGLE_CLIENT_ID'] ?? '';
 ?>
 <!DOCTYPE html>
@@ -42,7 +42,7 @@ $googleClientId = $_ENV['GOOGLE_CLIENT_ID'] ?? '';
             console.log(data); // debug
 
             if (data.trim() === "success") {
-                window.location.href = "dashboard.php";
+                window.location.href = "../dashboard/user.php";
             } else {
                 alert("Error: " + data);
             }
