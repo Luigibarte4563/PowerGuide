@@ -1,13 +1,14 @@
 CREATE DATABASE powerguide;
 USE powerguide;
 
--- =========================
+-- =====================================
 -- USERS
 -- Supports:
 -- - Local Login
 -- - Google Login
+-- - JWT Authentication
 -- - Roles
--- =========================
+-- =====================================
 CREATE TABLE users (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -41,6 +42,10 @@ CREATE TABLE users (
 
     is_verified BOOLEAN DEFAULT FALSE,
 
+    refresh_token TEXT NULL,
+
+    last_login TIMESTAMP NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -49,10 +54,10 @@ CREATE TABLE users (
 
 
 
--- =========================
+-- =====================================
 -- ELECTRIC COMPANIES
 -- Verified companies only
--- =========================
+-- =====================================
 CREATE TABLE electric_companies (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -73,20 +78,26 @@ CREATE TABLE electric_companies (
         'rejected'
     ) DEFAULT 'pending',
 
+    verified_by_admin_id INT NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id)
     REFERENCES users(id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+
+    FOREIGN KEY (verified_by_admin_id)
+    REFERENCES users(id)
+    ON DELETE SET NULL
 );
 
 
 
--- =========================
+-- =====================================
 -- COMPANY APPLICATIONS
 -- User applies to become
 -- an electric company
--- =========================
+-- =====================================
 CREATE TABLE company_applications (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -103,6 +114,8 @@ CREATE TABLE company_applications (
         'rejected'
     ) DEFAULT 'pending',
 
+    admin_note TEXT NULL,
+
     submitted_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     reviewed_at TIMESTAMP NULL,
@@ -114,9 +127,9 @@ CREATE TABLE company_applications (
 
 
 
--- =========================
+-- =====================================
 -- OUTAGE REPORTS
--- =========================
+-- =====================================
 CREATE TABLE outage_reports (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -148,64 +161,39 @@ CREATE TABLE outage_reports (
 
     description TEXT,
 
+    image_proof TEXT NULL,
+
     status ENUM(
         'unverified',
         'under_review',
         'verified',
-        'resolved'
+        'resolved',
+        'fake_report'
     ) DEFAULT 'unverified',
 
+    verified_by INT NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    ON UPDATE CURRENT_TIMESTAMP,
 
     FOREIGN KEY (user_id)
     REFERENCES users(id)
-    ON DELETE CASCADE
+    ON DELETE CASCADE,
+
+    FOREIGN KEY (verified_by)
+    REFERENCES users(id)
+    ON DELETE SET NULL
 );
 
 
 
--- =========================
--- MAINTENANCE SCHEDULES
--- Posted by verified
--- electric companies
--- =========================
-CREATE TABLE maintenance_schedules (
-
-    id INT AUTO_INCREMENT PRIMARY KEY,
-
-    electric_company_id INT,
-
-    affected_area VARCHAR(255) NOT NULL,
-
-    maintenance_date DATE NOT NULL,
-
-    start_time TIME NOT NULL,
-
-    end_time TIME NOT NULL,
-
-    description TEXT,
-
-    status ENUM(
-        'upcoming',
-        'ongoing',
-        'completed',
-        'cancelled'
-    ) DEFAULT 'upcoming',
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (electric_company_id)
-    REFERENCES electric_companies(id)
-    ON DELETE CASCADE
-);
-
-
-
--- =========================
+-- =====================================
 -- REPORT CONFIRMATIONS
 -- Other users can confirm
 -- outage reports
--- =========================
+-- =====================================
 CREATE TABLE report_confirmations (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -223,6 +211,72 @@ CREATE TABLE report_confirmations (
     ON DELETE CASCADE,
 
     FOREIGN KEY (user_id)
+    REFERENCES users(id)
+    ON DELETE CASCADE
+);
+
+
+
+-- =====================================
+-- MAINTENANCE SCHEDULES
+-- Posted by verified
+-- electric companies
+-- =====================================
+CREATE TABLE maintenance_schedules (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    electric_company_id INT,
+
+    affected_area VARCHAR(255) NOT NULL,
+
+    latitude DECIMAL(10,8),
+
+    longitude DECIMAL(11,8),
+
+    maintenance_date DATE NOT NULL,
+
+    start_time TIME NOT NULL,
+
+    end_time TIME NOT NULL,
+
+    description TEXT,
+
+    estimated_restoration_time DATETIME NULL,
+
+    status ENUM(
+        'upcoming',
+        'ongoing',
+        'completed',
+        'cancelled'
+    ) DEFAULT 'upcoming',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (electric_company_id)
+    REFERENCES electric_companies(id)
+    ON DELETE CASCADE
+);
+
+
+
+-- =====================================
+-- ADMIN LOGS
+-- Track admin actions
+-- =====================================
+CREATE TABLE admin_logs (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    admin_id INT,
+
+    action_type VARCHAR(255),
+
+    action_details TEXT,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (admin_id)
     REFERENCES users(id)
     ON DELETE CASCADE
 );
