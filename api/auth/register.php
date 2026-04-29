@@ -2,7 +2,7 @@
 
 session_start();
 
-require_once __DIR__ . '/../src/config/connection.php';
+require_once __DIR__ . '/../../src/config/connection.php';
 
 $conn = getConnection();
 
@@ -56,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     ];
 
     // redirect directly to dashboard
-    header("Location: dashboard.php");
+    header("Location: ../../public/dashboard.php");
     exit;
 }
 ?>

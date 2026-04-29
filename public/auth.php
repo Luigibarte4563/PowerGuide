@@ -72,7 +72,7 @@ $page = $_GET['page'] ?? 'login'; // login or register
     <!-- LOGIN FORM -->
     <h2>Login</h2>
 
-    <form action="login.php" method="POST">
+    <form action="../api/auth/login.php" method="POST">
         <input type="email" name="email" placeholder="Email" required><br>
         <input type="password" name="password" placeholder="Password" required><br>
 
@@ -86,7 +86,7 @@ $page = $_GET['page'] ?? 'login'; // login or register
     <!-- REGISTER FORM -->
     <h2>Register</h2>
 
-    <form action="register.php" method="POST">
+    <form action="../api/auth/register.php" method="POST">
         <input type="text" name="name" placeholder="Full Name" required><br>
         <input type="email" name="email" placeholder="Email" required><br>
         <input type="password" name="password" placeholder="Password" required><br>
