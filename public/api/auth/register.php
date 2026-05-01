@@ -2,7 +2,7 @@
 
 session_start();
 
-require_once __DIR__ . '/../../src/config/connection.php';
+require_once __DIR__ . '/../../../src/config/connection.php';
 
 $conn = getConnection();
 
@@ -25,7 +25,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
     if ($stmt->fetch()) {
 
-        header("Location: auth.php?page=register&error=Email already exists");
+        header("Location: /../../auth/auth.php?page=register&error=Email already exists");
         exit;
     }
 
@@ -56,7 +56,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
     ];
 
     // redirect directly to dashboard
-    header("Location: ../../public/dashboard.php");
+    header("Location: ../../dashboard/user.php");
     exit;
 }
 ?>

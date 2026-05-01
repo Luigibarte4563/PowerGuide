@@ -2,7 +2,7 @@
 
 session_start();
 
-require_once __DIR__ . '/../../src/config/connection.php';
+require_once __DIR__ . '/../../../src/config/connection.php';
 
 if (!isset($_SESSION['user'])) {
 
@@ -33,7 +33,7 @@ $stmt->execute([
 $_SESSION['user']['name'] = $name;
 $_SESSION['user']['email'] = $email;
 
-header("Location: ../dashboard/user.php");
+header("Location: ../../dashboard/user.php");
 exit();
 
 ?>

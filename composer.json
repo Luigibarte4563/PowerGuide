@@ -2,6 +2,6 @@
     "require": {
         "firebase/php-jwt": "^7.0",
         "google/apiclient": "^2.19",
-        "vlucas/phpdotenv": "*"
+        "vlucas/phpdotenv": "^5.6"
     }
 }
