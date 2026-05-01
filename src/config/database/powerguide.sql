@@ -134,12 +134,11 @@ CREATE TABLE outage_reports (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
 
-    user_id INT,
+    user_id INT NOT NULL,
 
     location_name VARCHAR(255) NOT NULL,
 
     latitude DECIMAL(10,8),
-
     longitude DECIMAL(11,8),
 
     category ENUM(
@@ -176,17 +175,20 @@ CREATE TABLE outage_reports (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    ON UPDATE CURRENT_TIMESTAMP,
+        ON UPDATE CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (user_id)
-    REFERENCES users(id)
-    ON DELETE CASCADE,
+    -- RELATION: reporter
+    CONSTRAINT fk_outage_user
+        FOREIGN KEY (user_id)
+        REFERENCES users(id)
+        ON DELETE CASCADE,
 
-    FOREIGN KEY (verified_by)
-    REFERENCES users(id)
-    ON DELETE SET NULL
+    -- RELATION: verifier (admin/moderator)
+    CONSTRAINT fk_outage_verified_by
+        FOREIGN KEY (verified_by)
+        REFERENCES users(id)
+        ON DELETE SET NULL
 );
-
 
 
 -- =====================================

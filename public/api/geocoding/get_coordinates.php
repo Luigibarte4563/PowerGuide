@@ -45,4 +45,4 @@ echo $data['features'][0]['geometry']['coordinates'][1];
 
 // header("Content-Type: application/json");
 // echo json_encode($data, JSON_PRETTY_PRINT);
-?>
+?> 
