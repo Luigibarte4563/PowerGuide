@@ -130,6 +130,10 @@ CREATE TABLE company_applications (
 -- =====================================
 -- OUTAGE REPORTS
 -- =====================================
+CREATE DATABASE powerguide;
+
+USE powerguide;
+
 CREATE TABLE outage_reports (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -139,6 +143,7 @@ CREATE TABLE outage_reports (
     location_name VARCHAR(255) NOT NULL,
 
     latitude DECIMAL(10,8),
+
     longitude DECIMAL(11,8),
 
     category ENUM(
@@ -162,6 +167,25 @@ CREATE TABLE outage_reports (
 
     image_proof TEXT NULL,
 
+    affected_houses INT DEFAULT 1,
+
+    is_active ENUM(
+        'yes',
+        'no',
+        'unknown'
+    ) DEFAULT 'yes',
+
+    hazard_type ENUM(
+        'none',
+        'smoke',
+        'sparks',
+        'fire',
+        'fallen_wire',
+        'explosion_sound'
+    ) DEFAULT 'none',
+
+    started_at DATETIME NULL,
+
     status ENUM(
         'unverified',
         'under_review',
@@ -177,17 +201,16 @@ CREATE TABLE outage_reports (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         ON UPDATE CURRENT_TIMESTAMP,
 
-    -- RELATION: reporter
     CONSTRAINT fk_outage_user
         FOREIGN KEY (user_id)
         REFERENCES users(id)
         ON DELETE CASCADE,
 
-    -- RELATION: verifier (admin/moderator)
     CONSTRAINT fk_outage_verified_by
         FOREIGN KEY (verified_by)
         REFERENCES users(id)
         ON DELETE SET NULL
+
 );
 
 -- =====================================
