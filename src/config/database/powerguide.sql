@@ -190,6 +190,47 @@ CREATE TABLE outage_reports (
         ON DELETE SET NULL
 );
 
+-- =====================================
+-- POWER STATIONS
+-- =====================================
+CREATE TABLE power_stations (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    station_name VARCHAR(255) NOT NULL,
+
+    location_name VARCHAR(255) NOT NULL,
+
+    latitude DECIMAL(10,8),
+
+    longitude DECIMAL(11,8),
+
+    station_type ENUM(
+        'power_station',
+        'solar_station',
+        'charging_station',
+        'generator_station'
+    ) NOT NULL,
+
+    access_type ENUM('free','paid') DEFAULT 'free',
+
+    status ENUM(
+        'active',
+        'inactive',
+        'maintenance'
+    ) DEFAULT 'active',
+
+    description TEXT,
+
+    image TEXT NULL,
+
+    created_by INT,
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+);
+
 
 -- =====================================
 -- REPORT CONFIRMATIONS
