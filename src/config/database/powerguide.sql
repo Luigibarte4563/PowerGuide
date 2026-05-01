@@ -220,6 +220,8 @@ CREATE TABLE power_stations (
 
     id INT AUTO_INCREMENT PRIMARY KEY,
 
+    created_by INT NULL,
+
     station_name VARCHAR(255) NOT NULL,
 
     location_name VARCHAR(255) NOT NULL,
@@ -235,23 +237,36 @@ CREATE TABLE power_stations (
         'generator_station'
     ) NOT NULL,
 
-    access_type ENUM('free','paid') DEFAULT 'free',
+    access_type ENUM(
+        'free',
+        'paid'
+    ) DEFAULT 'free',
 
-    status ENUM(
-        'active',
-        'inactive',
+    availability_status ENUM(
+        'available',
+        'busy',
+        'offline',
         'maintenance'
-    ) DEFAULT 'active',
+    ) DEFAULT 'available',
+
+    operating_hours VARCHAR(100) NULL,
+
+    charging_type VARCHAR(100) NULL,
 
     description TEXT,
 
     image TEXT NULL,
 
-    created_by INT,
-
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
-    FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        ON UPDATE CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_station_user
+        FOREIGN KEY (created_by)
+        REFERENCES users(id)
+        ON DELETE SET NULL
+
 );
 
 
