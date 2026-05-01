@@ -41,7 +41,6 @@ $user = $_SESSION['user'];
     <button type="submit">Update Profile</button>
   </form>
 
-  
 </body>
 
 </html>
