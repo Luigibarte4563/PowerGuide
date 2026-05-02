@@ -1,77 +1,46 @@
 <?php
+require_once __DIR__ . '/../../../src/config/env.php';
 
-session_start();
+$url = "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/create.php";
 
-header("Content-Type: application/json");
+$token = "YOUR_JWT_TOKEN_HERE";
 
-include "../../src/config/db_connect.php";
+/* =========================================
+   DYNAMIC INPUT (example from form or POST)
+========================================= */
+$location_name = $_POST['location_name'] ?? null;
+$category      = $_POST['category'] ?? null;
+$severity      = $_POST['severity'] ?? null;
+$description   = $_POST['description'] ?? null;
 
-$conn = getConnection();
+/* =========================================
+   BUILD DATA ARRAY DYNAMICALLY
+========================================= */
+$data = [
+    "location_name" => $location_name,
+    "category" => $category,
+    "severity" => $severity,
+    "description" => $description,
+    "image_proof" => null
+];
 
-if (!isset($_SESSION["user_id"])) {
+/* =========================================
+   CURL REQUEST
+========================================= */
+$ch = curl_init($url);
 
-    echo json_encode([
-        "success" => false,
-        "message" => "Unauthorized"
-    ]);
+curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+curl_setopt($ch, CURLOPT_POST, true);
 
-    exit;
-}
-
-$user_id = $_SESSION["user_id"];
-
-$data = json_decode(
-    file_get_contents("php://input"),
-    true
-);
-
-$stmt = $conn->prepare("
-    INSERT INTO outage_reports
-    (
-        user_id,
-        location_name,
-        latitude,
-        longitude,
-        category,
-        severity,
-        description
-    )
-    VALUES
-    (
-        :user_id,
-        :location_name,
-        :latitude,
-        :longitude,
-        :category,
-        :severity,
-        :description
-    )
-");
-
-$stmt->execute([
-
-    ":user_id" => $user_id,
-
-    ":location_name" =>
-        $data["location_name"],
-
-    ":latitude" =>
-        $data["latitude"],
-
-    ":longitude" =>
-        $data["longitude"],
-
-    ":category" =>
-        $data["category"],
-
-    ":severity" =>
-        $data["severity"],
-
-    ":description" =>
-        $data["description"]
+curl_setopt($ch, CURLOPT_HTTPHEADER, [
+    "Content-Type: application/json",
+    "Authorization: Bearer " . $token
 ]);
 
-echo json_encode([
-    "success" => true,
-    "message" => "Report submitted successfully"
-]);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
+
+$response = curl_exec($ch);
+
+curl_close($ch);
+
+echo $response;

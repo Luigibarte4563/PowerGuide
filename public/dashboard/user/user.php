@@ -22,13 +22,11 @@ $user = requireAuth();
   <h1>Welcome <?= htmlspecialchars($user['name']) ?></h1>
 
   <?php
-
     $defaultPicture = "https://scontent.fbag1-2.fna.fbcdn.net/v/t1.15752-9/667329625_832141525960325_566936363299643684_n.jpg";
 
     $picture = !empty($user['picture'])
         ? $user['picture']
         : $defaultPicture;
-
   ?>
 
   <!-- PROFILE IMAGE -->
@@ -38,9 +36,11 @@ $user = requireAuth();
 
   <a href="<?= BASE_URL ?>/logout.php">Logout</a>
 
+  <!-- =========================================
+       PROFILE UPDATE
+  ========================================= -->
   <h2>Edit Profile</h2>
 
-  <!-- 🔥 UPDATED FORM (NOW SUPPORTS IMAGE UPLOAD) -->
   <form action="<?= BASE_URL ?>/api/user/update_profile.php"
         method="POST"
         enctype="multipart/form-data">
@@ -53,16 +53,16 @@ $user = requireAuth();
            value="<?= htmlspecialchars($user['email']) ?>"
            required><br><br>
 
-    <!-- PROFILE IMAGE UPLOAD -->
     <input type="file" name="picture" accept="image/*"><br><br>
 
     <button type="submit">Update Profile</button>
 
   </form>
 
-  <h2>Change Password</h2>
-
-<?php if ($user['auth_provider'] !== 'google'): ?>
+  <!-- =========================================
+       PASSWORD
+  ========================================= -->
+  <?php if ($user['auth_provider'] !== 'google'): ?>
 
     <h2>Change Password</h2>
 
@@ -87,28 +87,180 @@ $user = requireAuth();
 
     </form>
 
-<?php else: ?>
+  <?php else: ?>
 
     <h2>Security</h2>
     <p style="color:gray;">
         You are logged in using Google. Password management is handled by Google.
     </p>
 
-<?php endif; ?>
+  <?php endif; ?>
 
+  <!-- =========================================
+       🚨 OUTAGE REPORT FORM (NEW)
+  ========================================= -->
+  <h2>Create Outage Report</h2>
+
+  <form id="outageForm">
+
+      <input type="text" id="location_name" placeholder="Location Name" required><br><br>
+
+      <select id="category">
+          <option value="power_outage">Power Outage</option>
+          <option value="low_voltage">Low Voltage</option>
+          <option value="power_fluctuation">Power Fluctuation</option>
+          <option value="transformer_explosion">Transformer Explosion</option>
+          <option value="fallen_power_line">Fallen Power Line</option>
+          <option value="electrical_fire">Electrical Fire</option>
+          <option value="scheduled_maintenance">Maintenance</option>
+          <option value="unknown_issue">Unknown</option>
+      </select><br><br>
+
+      <select id="severity">
+          <option value="minor">Minor</option>
+          <option value="moderate">Moderate</option>
+          <option value="critical">Critical</option>
+      </select><br><br>
+
+      <textarea id="description" placeholder="Describe the issue..." required></textarea><br><br>
+
+      <button type="submit">Submit Report</button>
+
+  </form>
+
+  <p id="response"></p>
+
+  <!-- =========================================
+       JS FETCH TO YOUR API
+  ========================================= -->
+  <script>
+    document.getElementById("outageForm").addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const data = {
+            user_id: <?= $user['id'] ?>, // from session
+            location_name: document.getElementById("location_name").value,
+            category: document.getElementById("category").value,
+            severity: document.getElementById("severity").value,
+            description: document.getElementById("description").value,
+            image_proof: null
+        };
+
+        const response = await fetch("http://localhost/crowdsourced-outage-reporting-api/api/outage_report/create.php", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(data)
+        });
+
+        const result = await response.json();
+
+        document.getElementById("response").innerText = result.message;
+    });
+  </script>
+
+  <!-- =========================================
+       GEOLOCATION (optional)
+  ========================================= -->
   <script>
     navigator.geolocation.getCurrentPosition(
       (position) => {
-
         console.log("Latitude:", position.coords.latitude);
         console.log("Longitude:", position.coords.longitude);
-
       },
       (error) => {
         console.log("Permission denied or error");
       }
     );
   </script>
+
+</body>
+</html> 
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Outage Map</title>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        #map {
+            height: 90vh;
+            width: 100%;
+        }
+    </style>
+</head>
+
+<body>
+
+<h2>Power Outage Reports Map</h2>
+
+<div id="map"></div>
+
+<script>
+/* =========================================
+   CUSTOM ICON (must be first)
+========================================= */
+const outageIcon = L.icon({
+    iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRV50z4vUtm0jKephlKryT2BI6H6YnQi1NbA&s',
+    iconSize: [40, 40],
+    iconAnchor: [20, 40],
+    popupAnchor: [0, -35]
+});
+
+/* =========================================
+   DAGUPAN ONLY MAP VIEW
+========================================= */
+let map = L.map('map').setView([16.0431, 120.3330], 13); // Dagupan City
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: 'OpenStreetMap'
+}).addTo(map);
+
+/* =========================================
+   LOAD REPORTS
+========================================= */
+async function loadReports() {
+
+    const response = await fetch(
+        "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get.php"
+    );
+
+    const result = await response.json();
+
+    if (!result.success) {
+        alert(result.message || "Failed to load reports");
+        return;
+    }
+
+    const reports = result.data;
+
+    reports.forEach(report => {
+
+        if (report.latitude && report.longitude) {
+
+            L.marker(
+                [report.latitude, report.longitude],
+                { icon: outageIcon }   // ✅ FIXED HERE
+            )
+            .addTo(map)
+            .bindPopup(`
+                <b>${report.location_name}</b><br>
+                <b>Category:</b> ${report.category}<br>
+                <b>Severity:</b> ${report.severity}<br>
+                <b>Status:</b> ${report.status}<br>
+                <hr>
+                ${report.description}
+            `);
+        }
+    });
+}
+
+loadReports();
+</script>
 
 </body>
 </html>
