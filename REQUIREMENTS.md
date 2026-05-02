@@ -1,41 +1,46 @@
- PowerGuide System
+#  PowerGuide System
 
 PowerGuide is a PHP-based web application that includes:
 
-User Authentication (JWT + Session fallback)
-Google OAuth Login support
-Dashboard system
-Crowdsourced outage reporting API integration
-Geocoding API support
-MySQL database backend
+- User Authentication (JWT + Session fallback)
+- Google OAuth Login support
+- Dashboard system
+- Crowdsourced outage reporting API integration
+- Geocoding API support
+- MySQL database backend
 
 It also connects to a separate microservice:
 
- Crowdsourced Outage Reporting API
+##  Crowdsourced Outage Reporting API
 https://github.com/Luigibarte4563/CrowdsourcedAPI
 
- Requirements
- Server Requirements
-PHP 8.0+
-MySQL / MariaDB
-Apache (XAMPP recommended)
-Composer
- PHP Dependencies
+---
 
-Installed via Composer:
+#  Requirements
 
+##  Server Requirements
+- PHP 8.0+
+- MySQL / MariaDB
+- Apache (XAMPP recommended)
+- Composer
+
+---
+
+##  PHP Dependencies
+
+Install via Composer:
+
+```bash
 composer require firebase/php-jwt
 composer require vlucas/phpdotenv
-
-Used libraries:
-
+Used Libraries:
  Firebase JWT → Authentication system
- vlucas/phpdotenv → Environment variables support
+ vlucas/phpdotenv → Environment variable management
  Project Setup
 1. Clone PowerGuide
 git clone https://github.com/Luigibarte4563/PowerGuide.git
 
-Move to XAMPP:
+Move to:
 
 C:\xampp\htdocs\PowerGuide
 2. Clone Crowdsourced API (Separate Backend)
@@ -50,8 +55,11 @@ Create database:
 
 CREATE DATABASE powerguide;
 
-Import your tables (users, outage_reports, etc.)
+Import your tables:
 
+users
+outage_reports
+other required tables
 4. Configure Environment (.env)
 
 Create file:
@@ -67,18 +75,15 @@ DB_PASS=
 
 JWT_SECRET=11111111111111111111111111111111
 APP_URL=http://localhost/PowerGuide/public
-5. Apache Base URL Setup
+ Base URL / Access
 
-Access project via:
+Open in browser:
 
 http://localhost/PowerGuide/public
 
-OR if using IP:
+OR LAN access:
 
 http://192.168.x.x/PowerGuide/public
-
-(Ensure Apache allows LAN access)
-
  Authentication System
 
 PowerGuide supports:
@@ -105,17 +110,13 @@ geocoding/
 crowdsourced/
  Crowdsourced API (Separate Service)
 /crowdsourced-outage-reporting-api/api/
-
 Example endpoints:
-
 GET  /get_reports.php
 POST /create_report.php
-📡 Example Usage
+ Example Usage
 Create Report (POST)
 POST http://localhost/crowdsourced-outage-reporting-api/api/create_report.php
-
 Body (JSON):
-
 {
   "user_id": 1,
   "location_name": "Zaragoza",
@@ -150,8 +151,8 @@ crowdsourced-outage-reporting-api/
 ├── config/
 ├── database/
 └── index.php
-Common Issues
-Redirect broken
+ Common Issues
+ Redirect broken
 
 Use:
 
@@ -160,18 +161,18 @@ header("Location: /PowerGuide/public/dashboard/user.php");
 NOT:
 
 public/dashboard/public/api/...
-BASE_URL already defined
+ BASE_URL already defined
 
-Only define once in:
+Define only once in:
 
 config/app.php OR .env loader
-PDO undefined
+ PDO undefined
 
 Make sure:
 
 require_once connection.php;
 $conn = getConnection();
-Run Project
+ Run Project
 Start XAMPP:
 Apache
 MySQL
