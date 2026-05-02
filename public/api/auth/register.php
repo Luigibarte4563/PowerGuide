@@ -3,60 +3,77 @@
 session_start();
 
 require_once __DIR__ . '/../../../src/config/connection.php';
+require_once __DIR__ . '/../../../src/config/app.php';
+require '../../../vendor/autoload.php';
+require_once __DIR__ . '/../../../src/config/env.php';
+
+$secret_key = $_ENV['JWT_SECRET_KEY'];
+
+use Firebase\JWT\JWT;
 
 $conn = getConnection();
 
 if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
-    $name = $_POST['name'];
-    $email = $_POST['email'];
+    $name = trim($_POST['name']);
+    $email = trim($_POST['email']);
+    $passwordRaw = $_POST['password'];
 
-    // hash password
-    $password = password_hash(
-        $_POST['password'],
-        PASSWORD_BCRYPT
-    );
+    if (strlen($passwordRaw) < 6) {
 
-    // check if email exists
-    $check = "SELECT id FROM users WHERE email = ?";
+        $_SESSION['register_error'] = "Password must be at least 6 characters.";
 
-    $stmt = $conn->prepare($check);
+        header("Location: " . BASE_URL . "/auth/auth.php?page=register");
+        exit;
+    }
+
+    $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
     $stmt->execute([$email]);
 
     if ($stmt->fetch()) {
 
-        header("Location: /../../auth/auth.php?page=register&error=Email already exists");
+        $_SESSION['register_error'] = "Email already exists.";
+
+        header("Location: " . BASE_URL . "/auth/auth.php?page=register");
         exit;
     }
 
-    // insert user
-    $sql = "INSERT INTO users
-            (name, email, password, auth_provider)
-            VALUES (?, ?, ?, 'local')";
+    $password = password_hash($passwordRaw, PASSWORD_BCRYPT);
 
-    $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare("
+        INSERT INTO users (name, email, password, auth_provider, created_at)
+        VALUES (?, ?, ?, 'local', NOW())
+    ");
 
-    $stmt->execute([
-        $name,
-        $email,
-        $password
-    ]);
+    $stmt->execute([$name, $email, $password]);
 
-    // get inserted user id
     $userId = $conn->lastInsertId();
 
-    // create session immediately
-    $_SESSION['user'] = [
+    $stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+    $stmt->execute([$userId]);
+    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        "id" => $userId,
-        "name" => $name,
-        "email" => $email,
-        "auth_provider" => "local"
 
+    $payload = [
+        "id" => $user['id'],
+        "email" => $user['email'],
+        "role" => $user['role'],
+        "iat" => time(),
+        "exp" => time() + 3600
     ];
 
-    // redirect directly to dashboard
-    header("Location: ../../dashboard/user.php");
+    $jwt = JWT::encode($payload, $secret_key, 'HS256');
+
+    setcookie("jwt_token", $jwt, time() + 3600, "/", "", false, true);
+
+    $_SESSION['user'] = [
+        "id" => $user['id'],
+        "name" => $user['name'],
+        "email" => $user['email'],
+        "auth_provider" => "local"
+    ];
+
+    header("Location: " . BASE_URL . "/dashboard/user/user.php");
     exit;
 }
 ?>
