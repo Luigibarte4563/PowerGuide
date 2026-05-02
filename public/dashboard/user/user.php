@@ -180,23 +180,109 @@ $user = requireAuth();
 
 <!DOCTYPE html>
 <html>
+<!DOCTYPE html>
+<html>
 <head>
-    <title>Outage Map</title>
 
-    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <title>Power Outage Reports Map</title>
+
+    <link rel="stylesheet"
+          href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
     <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
 
     <style>
-        #map {
-            height: 90vh;
-            width: 100%;
+
+        body{
+            font-family: Arial;
+            margin:0;
+            padding:20px;
         }
+
+        form{
+            margin-bottom:20px;
+            padding:20px;
+            border:1px solid #ccc;
+            border-radius:10px;
+        }
+
+        input,
+        select,
+        textarea,
+        button{
+            width:100%;
+            padding:10px;
+            margin-top:10px;
+        }
+
+        #map{
+            height:80vh;
+            width:100%;
+            border-radius:10px;
+        }
+
     </style>
+
 </head>
 
 <body>
 
-<h2>Power Outage Reports Map</h2>
+<h1>Power Outage Reporting System</h1>
+
+<!-- =========================================
+     CREATE REPORT FORM
+========================================= -->
+<form action="/../../api/crowdsourced/create_report.php" method="POST">
+
+    <h2>Create Outage Report</h2>
+
+    <input
+        type="text"
+        name="location_name"
+        placeholder="Location Name"
+        required
+    >
+
+    <select name="category">
+
+        <option value="power_outage">
+            Power Outage
+        </option>
+
+        <option value="low_voltage">
+            Low Voltage
+        </option>
+
+        <option value="power_fluctuation">
+            Power Fluctuation
+        </option>
+
+    </select>
+
+    <select name="severity">
+
+        <option value="minor">Minor</option>
+        <option value="moderate">Moderate</option>
+        <option value="critical">Critical</option>
+
+    </select>
+
+    <textarea
+        name="description"
+        placeholder="Describe the outage..."
+        required
+    ></textarea>
+
+    <button type="submit">
+        Submit Report
+    </button>
+
+</form>
+
+<!-- =========================================
+     MAP
+========================================= -->
+<h2>Outage Reports Map</h2>
 
 <div id="map"></div>
 
@@ -206,35 +292,51 @@ $user = requireAuth();
    CUSTOM ICON
 ========================================= */
 const outageIcon = L.icon({
-    iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRV50z4vUtm0jKephlKryT2BI6H6YnQi1NbA&s',
+
+    iconUrl:
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRV50z4vUtm0jKephlKryT2BI6H6YnQi1NbA&s',
+
     iconSize: [40, 40],
+
     iconAnchor: [20, 40],
+
     popupAnchor: [0, -35]
+
 });
 
 /* =========================================
-   DAGUPAN ONLY MAP VIEW
+   MAP VIEW
 ========================================= */
-let map = L.map('map').setView([16.0431, 120.3330], 13);
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: 'OpenStreetMap'
-}).addTo(map);
+let map = L.map('map').setView(
+    [16.0431, 120.3330],
+    13
+);
 
 /* =========================================
-   LOAD REPORTS FROM API
+   MAP TILE
 ========================================= */
-async function loadReports() {
+L.tileLayer(
+    'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+    {
+        attribution: 'OpenStreetMap'
+    }
+).addTo(map);
 
-    try {
+/* =========================================
+   LOAD REPORTS
+========================================= */
+async function loadReports(){
+
+    try{
+
         const response = await fetch(
-            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get.php"
+            "http://localhost/powerguide/public/api/crowdsourced/get_reports.php"
         );
 
         const result = await response.json();
 
-        if (!result.success) {
-            alert(result.message || "Failed to load reports");
+        if(!result.success){
+            alert("Failed to load reports");
             return;
         }
 
@@ -242,31 +344,68 @@ async function loadReports() {
 
         reports.forEach(report => {
 
-            if (report.latitude && report.longitude) {
+            if(report.latitude && report.longitude){
 
                 const marker = L.marker(
-                    [report.latitude, report.longitude],
-                    { icon: outageIcon }
+                    [
+                        report.latitude,
+                        report.longitude
+                    ],
+                    {
+                        icon: outageIcon
+                    }
                 ).addTo(map);
 
                 /* =========================================
-                   POPUP (CLICK)
-                ========================================= */
+                   POPUP
+                ========================================== */
                 marker.bindPopup(`
-                    <b>${report.location_name}</b><br>
-                    <b>Category:</b> ${report.category}<br>
-                    <b>Severity:</b> ${report.severity}<br>
-                    <b>Status:</b> ${report.status}<br>
-                    <hr>
-                    ${report.description}
+
+                    <div style="width:250px;">
+
+                        <h3>${report.location_name}</h3>
+
+                        <hr>
+
+                        <b>Category:</b>
+                        ${report.category}<br>
+
+                        <b>Severity:</b>
+                        ${report.severity}<br>
+
+                        <b>Status:</b>
+                        ${report.status}<br>
+
+                        <b>Affected Houses:</b>
+                        ${report.affected_houses}<br>
+
+                        <b>Active Outage:</b>
+                        ${report.is_active}<br>
+
+                        <b>Hazard:</b>
+                        ${report.hazard_type}<br>
+
+                        <b>Started:</b>
+                        ${report.started_at ?? "Unknown"}<br>
+
+                        <hr>
+
+                        <b>Description:</b><br>
+
+                        ${report.description}
+
+                    </div>
+
                 `);
 
                 /* =========================================
-                   TOOLTIP (HOVER)
-                ========================================= */
+                   HOVER TOOLTIP
+                ========================================== */
                 marker.bindTooltip(
-                    `<b>${report.location_name}</b><br>
-                    ${report.description}`,
+                    `
+                    <b>${report.location_name}</b><br>
+                    ${report.description}
+                    `,
                     {
                         direction: "top",
                         offset: [0, -20],
@@ -275,20 +414,257 @@ async function loadReports() {
                     }
                 );
             }
+
         });
 
-    } catch (error) {
-        console.error("Error loading reports:", error);
-        alert("Failed to load map data.");
+    }catch(error){
+
+        console.error(error);
+
+        alert("Failed to load map data");
+
     }
+
 }
 
 loadReports();
 
 </script>
-
 </body>
 </html>
 
+
+<!-- udpate -->
+
+<!DOCTYPE html>
+<html>
+
+<head>
+
+    <title>My Reports</title>
+
+    <style>
+
+        body{
+            font-family: Arial;
+            padding:20px;
+        }
+
+        .card{
+            border:1px solid #ccc;
+            padding:15px;
+            margin-bottom:10px;
+            border-radius:10px;
+        }
+
+        .btn{
+            padding:8px 12px;
+            margin-top:8px;
+            cursor:pointer;
+        }
+
+        #formBox{
+            display:none;
+            margin-top:20px;
+            padding:15px;
+            border:2px solid #000;
+            border-radius:10px;
+        }
+
+        input,
+        select,
+        textarea{
+            width:100%;
+            padding:8px;
+            margin-top:8px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+
+<h2>My Outage Reports</h2>
+
+<div id="list"></div>
+
+<!-- UPDATE FORM -->
+<div id="formBox">
+
+    <h3>Update Report</h3>
+
+    <input type="hidden" id="id">
+
+    <input type="text" id="location_name" placeholder="Location">
+
+    <select id="category">
+        <option value="power_outage">Power Outage</option>
+        <option value="low_voltage">Low Voltage</option>
+        <option value="power_fluctuation">Power Fluctuation</option>
+    </select>
+
+    <select id="severity">
+        <option value="minor">Minor</option>
+        <option value="moderate">Moderate</option>
+        <option value="critical">Critical</option>
+    </select>
+
+    <textarea id="description" placeholder="Description"></textarea>
+
+    <input type="number" id="affected_houses" placeholder="Affected Houses">
+
+    <select id="status">
+        <option value="unverified">Unverified</option>
+        <option value="verified">Verified</option>
+        <option value="resolved">Resolved</option>
+    </select>
+
+    <button class="btn" onclick="updateReport()">
+        Save Changes
+    </button>
+
+    <button class="btn" onclick="closeForm()">
+        Cancel
+    </button>
+
+</div>
+
+<script>
+
+/* =========================================
+   LOAD ONLY USER REPORTS
+========================================= */
+
+async function loadReports(){
+
+    try {
+
+        const res = await fetch(
+            "http://localhost/powerguide/public/api/crowdsourced/get_my_reports.php",
+            {
+                credentials: "include"
+            }
+        );
+
+        const data = await res.json();
+
+        const list = document.getElementById("list");
+
+        if(!data.success){
+            list.innerHTML = "Not logged in or no reports found.";
+            return;
+        }
+
+        list.innerHTML = "";
+
+        data.data.forEach(r => {
+
+            list.innerHTML += `
+                <div class="card">
+
+                    <b>${r.location_name}</b><br>
+                    ${r.description}<br><br>
+
+                    Status: ${r.status}<br>
+                    Affected: ${r.affected_houses}<br>
+
+                    <button class="btn" onclick='editReport(${JSON.stringify(r).replace(/"/g, "&quot;")})'>
+                        Edit
+                    </button>
+
+                </div>
+            `;
+        });
+
+    } catch (error) {
+        console.error(error);
+        document.getElementById("list").innerHTML = "Failed to load reports.";
+    }
+}
+
+
+/* =========================================
+   OPEN EDIT FORM
+========================================= */
+
+function editReport(r){
+
+    document.getElementById("formBox").style.display = "block";
+
+    document.getElementById("id").value = r.id;
+    document.getElementById("location_name").value = r.location_name;
+    document.getElementById("category").value = r.category;
+    document.getElementById("severity").value = r.severity;
+    document.getElementById("description").value = r.description;
+    document.getElementById("affected_houses").value = r.affected_houses;
+    document.getElementById("status").value = r.status;
+}
+
+
+/* =========================================
+   CLOSE FORM
+========================================= */
+
+function closeForm(){
+    document.getElementById("formBox").style.display = "none";
+}
+
+
+/* =========================================
+   UPDATE REPORT (FIXED API CALL)
+========================================= */
+
+async function updateReport(){
+
+    try {
+
+        const payload = {
+
+            id: document.getElementById("id").value,
+            location_name: document.getElementById("location_name").value,
+            category: document.getElementById("category").value,
+            severity: document.getElementById("severity").value,
+            description: document.getElementById("description").value,
+            affected_houses: document.getElementById("affected_houses").value,
+            status: document.getElementById("status").value
+
+        };
+
+        const res = await fetch(
+            "http://localhost/powerguide/public/api/crowdsourced/update_report.php",
+            {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        const result = await res.json();
+
+        alert(result.message);
+
+        if(result.success){
+            closeForm();
+            loadReports();
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert("Update failed.");
+    }
+}
+
+
+/* =========================================
+   INIT
+========================================= */
+
+loadReports();
+
+</script>
 </body>
 </html>
