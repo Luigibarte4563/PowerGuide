@@ -201,8 +201,9 @@ $user = requireAuth();
 <div id="map"></div>
 
 <script>
+
 /* =========================================
-   CUSTOM ICON (must be first)
+   CUSTOM ICON
 ========================================= */
 const outageIcon = L.icon({
     iconUrl: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTRV50z4vUtm0jKephlKryT2BI6H6YnQi1NbA&s',
@@ -214,53 +215,80 @@ const outageIcon = L.icon({
 /* =========================================
    DAGUPAN ONLY MAP VIEW
 ========================================= */
-let map = L.map('map').setView([16.0431, 120.3330], 13); // Dagupan City
+let map = L.map('map').setView([16.0431, 120.3330], 13);
 
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: 'OpenStreetMap'
 }).addTo(map);
 
 /* =========================================
-   LOAD REPORTS
+   LOAD REPORTS FROM API
 ========================================= */
 async function loadReports() {
 
-    const response = await fetch(
-        "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get.php"
-    );
+    try {
+        const response = await fetch(
+            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get.php"
+        );
 
-    const result = await response.json();
+        const result = await response.json();
 
-    if (!result.success) {
-        alert(result.message || "Failed to load reports");
-        return;
-    }
-
-    const reports = result.data;
-
-    reports.forEach(report => {
-
-        if (report.latitude && report.longitude) {
-
-            L.marker(
-                [report.latitude, report.longitude],
-                { icon: outageIcon }   // ✅ FIXED HERE
-            )
-            .addTo(map)
-            .bindPopup(`
-                <b>${report.location_name}</b><br>
-                <b>Category:</b> ${report.category}<br>
-                <b>Severity:</b> ${report.severity}<br>
-                <b>Status:</b> ${report.status}<br>
-                <hr>
-                ${report.description}
-            `);
+        if (!result.success) {
+            alert(result.message || "Failed to load reports");
+            return;
         }
-    });
+
+        const reports = result.data;
+
+        reports.forEach(report => {
+
+            if (report.latitude && report.longitude) {
+
+                const marker = L.marker(
+                    [report.latitude, report.longitude],
+                    { icon: outageIcon }
+                ).addTo(map);
+
+                /* =========================================
+                   POPUP (CLICK)
+                ========================================= */
+                marker.bindPopup(`
+                    <b>${report.location_name}</b><br>
+                    <b>Category:</b> ${report.category}<br>
+                    <b>Severity:</b> ${report.severity}<br>
+                    <b>Status:</b> ${report.status}<br>
+                    <hr>
+                    ${report.description}
+                `);
+
+                /* =========================================
+                   TOOLTIP (HOVER)
+                ========================================= */
+                marker.bindTooltip(
+                    `<b>${report.location_name}</b><br>
+                    ${report.description}`,
+                    {
+                        direction: "top",
+                        offset: [0, -20],
+                        opacity: 0.9,
+                        sticky: true
+                    }
+                );
+            }
+        });
+
+    } catch (error) {
+        console.error("Error loading reports:", error);
+        alert("Failed to load map data.");
+    }
 }
 
 loadReports();
+
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
