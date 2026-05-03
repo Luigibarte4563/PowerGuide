@@ -437,46 +437,133 @@ loadReports();
 <!-- udpate -->
 
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
 
-    <title>My Reports</title>
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>My Outage Reports</title>
 
     <style>
 
+        *{
+            margin:0;
+            padding:0;
+            box-sizing:border-box;
+            font-family:Arial, sans-serif;
+        }
+
         body{
-            font-family: Arial;
-            padding:20px;
+            background:#f5f5f5;
+            padding:30px;
+        }
+
+        h2{
+            margin-bottom:20px;
+            color:#222;
+        }
+
+        #list{
+            display:grid;
+            grid-template-columns:repeat(auto-fit, minmax(320px, 1fr));
+            gap:20px;
         }
 
         .card{
-            border:1px solid #ccc;
-            padding:15px;
+            background:#fff;
+            padding:20px;
+            border-radius:12px;
+            box-shadow:0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .card h3{
             margin-bottom:10px;
-            border-radius:10px;
+            color:#111;
+        }
+
+        .badge{
+            display:inline-block;
+            padding:5px 10px;
+            border-radius:20px;
+            font-size:12px;
+            margin-top:5px;
+        }
+
+        .critical{
+            background:#ffcccc;
+            color:#b30000;
+        }
+
+        .moderate{
+            background:#fff0cc;
+            color:#cc7a00;
+        }
+
+        .minor{
+            background:#d9f2d9;
+            color:#267326;
         }
 
         .btn{
-            padding:8px 12px;
-            margin-top:8px;
+            border:none;
+            padding:10px 14px;
+            border-radius:8px;
             cursor:pointer;
+            margin-top:10px;
+        }
+
+        .edit-btn{
+            background:#007bff;
+            color:white;
+        }
+
+        .save-btn{
+            background:#28a745;
+            color:white;
+        }
+
+        .cancel-btn{
+            background:#dc3545;
+            color:white;
+        }
+
+        #formOverlay{
+            position:fixed;
+            top:0;
+            left:0;
+            width:100%;
+            height:100%;
+            background:rgba(0,0,0,0.5);
+            display:none;
+            justify-content:center;
+            align-items:center;
         }
 
         #formBox{
-            display:none;
-            margin-top:20px;
-            padding:15px;
-            border:2px solid #000;
-            border-radius:10px;
+            background:white;
+            width:500px;
+            max-width:95%;
+            padding:25px;
+            border-radius:12px;
         }
 
         input,
         select,
         textarea{
             width:100%;
-            padding:8px;
-            margin-top:8px;
+            padding:12px;
+            margin-top:10px;
+            border:1px solid #ccc;
+            border-radius:8px;
+        }
+
+        textarea{
+            min-height:120px;
+            resize:vertical;
+            z-index: 100;
         }
 
     </style>
@@ -489,51 +576,105 @@ loadReports();
 
 <div id="list"></div>
 
-<!-- UPDATE FORM -->
-<div id="formBox">
+<!-- UPDATE FORM MODAL -->
 
-    <h3>Update Report</h3>
+<div id="formOverlay">
 
-    <input type="hidden" id="id">
+    <div id="formBox">
 
-    <input type="text" id="location_name" placeholder="Location">
+        <h3>Update Report</h3>
 
-    <select id="category">
-        <option value="power_outage">Power Outage</option>
-        <option value="low_voltage">Low Voltage</option>
-        <option value="power_fluctuation">Power Fluctuation</option>
-    </select>
+        <input type="hidden" id="id">
 
-    <select id="severity">
-        <option value="minor">Minor</option>
-        <option value="moderate">Moderate</option>
-        <option value="critical">Critical</option>
-    </select>
+        <input
+            type="text"
+            id="location_name"
+            placeholder="Location"
+        >
 
-    <textarea id="description" placeholder="Description"></textarea>
+        <select id="category">
 
-    <input type="number" id="affected_houses" placeholder="Affected Houses">
+            <option value="power_outage">
+                Power Outage
+            </option>
 
-    <select id="status">
-        <option value="unverified">Unverified</option>
-        <option value="verified">Verified</option>
-        <option value="resolved">Resolved</option>
-    </select>
+            <option value="low_voltage">
+                Low Voltage
+            </option>
 
-    <button class="btn" onclick="updateReport()">
-        Save Changes
-    </button>
+            <option value="power_fluctuation">
+                Power Fluctuation
+            </option>
 
-    <button class="btn" onclick="closeForm()">
-        Cancel
-    </button>
+        </select>
+
+        <select id="severity">
+
+            <option value="minor">
+                Minor
+            </option>
+
+            <option value="moderate">
+                Moderate
+            </option>
+
+            <option value="critical">
+                Critical
+            </option>
+
+        </select>
+
+        <textarea
+            id="description"
+            placeholder="Description"
+        ></textarea>
+
+        <input
+            type="number"
+            id="affected_houses"
+            placeholder="Affected Houses"
+        >
+
+        <select id="status">
+
+            <option value="unverified">
+                Unverified
+            </option>
+
+            <option value="verified">
+                Verified
+            </option>
+
+            <option value="resolved">
+                Resolved
+            </option>
+
+        </select>
+
+        <br>
+
+        <button
+            class="btn save-btn"
+            onclick="updateReport()"
+        >
+            Save Changes
+        </button>
+
+        <button
+            class="btn cancel-btn"
+            onclick="closeForm()"
+        >
+            Cancel
+        </button>
+
+    </div>
 
 </div>
 
 <script>
 
 /* =========================================
-   LOAD ONLY USER REPORTS
+   LOAD REPORTS
 ========================================= */
 
 async function loadReports(){
@@ -547,58 +688,110 @@ async function loadReports(){
             }
         );
 
-        const data = await res.json();
+        const result = await res.json();
 
         const list = document.getElementById("list");
 
-        if(!data.success){
-            list.innerHTML = "Not logged in or no reports found.";
+        if(!result.success){
+
+            list.innerHTML = `
+                <p>
+                    Failed to load reports.
+                </p>
+            `;
+
             return;
         }
 
         list.innerHTML = "";
 
-        data.data.forEach(r => {
+        result.data.forEach(report => {
 
             list.innerHTML += `
+
                 <div class="card">
 
-                    <b>${r.location_name}</b><br>
-                    ${r.description}<br><br>
+                    <h3>
+                        ${report.location_name}
+                    </h3>
 
-                    Status: ${r.status}<br>
-                    Affected: ${r.affected_houses}<br>
+                    <p>
+                        ${report.description}
+                    </p>
 
-                    <button class="btn" onclick='editReport(${JSON.stringify(r).replace(/"/g, "&quot;")})'>
-                        Edit
+                    <br>
+
+                    <p>
+                        <b>Category:</b>
+                        ${report.category}
+                    </p>
+
+                    <p>
+                        <b>Status:</b>
+                        ${report.status}
+                    </p>
+
+                    <p>
+                        <b>Affected Houses:</b>
+                        ${report.affected_houses}
+                    </p>
+
+                    <span class="badge ${report.severity}">
+                        ${report.severity}
+                    </span>
+
+                    <br>
+
+                    <button
+                        class="btn edit-btn"
+                        onclick='editReport(${JSON.stringify(report).replace(/"/g, "&quot;")})'
+                    >
+                        Edit Report
                     </button>
 
                 </div>
+
             `;
         });
 
-    } catch (error) {
+    } catch(error){
+
         console.error(error);
-        document.getElementById("list").innerHTML = "Failed to load reports.";
+
+        document.getElementById("list").innerHTML = `
+            Failed to load reports.
+        `;
     }
 }
 
 
 /* =========================================
-   OPEN EDIT FORM
+   OPEN FORM
 ========================================= */
 
-function editReport(r){
+function editReport(report){
 
-    document.getElementById("formBox").style.display = "block";
+    document.getElementById("formOverlay").style.display = "flex";
 
-    document.getElementById("id").value = r.id;
-    document.getElementById("location_name").value = r.location_name;
-    document.getElementById("category").value = r.category;
-    document.getElementById("severity").value = r.severity;
-    document.getElementById("description").value = r.description;
-    document.getElementById("affected_houses").value = r.affected_houses;
-    document.getElementById("status").value = r.status;
+    document.getElementById("id").value = report.id;
+
+    document.getElementById("location_name").value =
+        report.location_name;
+
+    document.getElementById("category").value =
+        report.category;
+
+    document.getElementById("severity").value =
+        report.severity;
+
+    document.getElementById("description").value =
+        report.description;
+
+    document.getElementById("affected_houses").value =
+        report.affected_houses;
+
+    document.getElementById("status").value =
+        report.status;
 }
 
 
@@ -607,12 +800,13 @@ function editReport(r){
 ========================================= */
 
 function closeForm(){
-    document.getElementById("formBox").style.display = "none";
+
+    document.getElementById("formOverlay").style.display = "none";
 }
 
 
 /* =========================================
-   UPDATE REPORT (FIXED API CALL)
+   UPDATE REPORT
 ========================================= */
 
 async function updateReport(){
@@ -621,25 +815,40 @@ async function updateReport(){
 
         const payload = {
 
-            id: document.getElementById("id").value,
-            location_name: document.getElementById("location_name").value,
-            category: document.getElementById("category").value,
-            severity: document.getElementById("severity").value,
-            description: document.getElementById("description").value,
-            affected_houses: document.getElementById("affected_houses").value,
-            status: document.getElementById("status").value
+            id:
+                document.getElementById("id").value,
 
+            location_name:
+                document.getElementById("location_name").value,
+
+            category:
+                document.getElementById("category").value,
+
+            severity:
+                document.getElementById("severity").value,
+
+            description:
+                document.getElementById("description").value,
+
+            affected_houses:
+                document.getElementById("affected_houses").value,
+
+            status:
+                document.getElementById("status").value
         };
 
         const res = await fetch(
             "http://localhost/powerguide/public/api/crowdsourced/update_report.php",
             {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/json"
+                method:"POST",
+
+                credentials:"include",
+
+                headers:{
+                    "Content-Type":"application/json"
                 },
-                body: JSON.stringify(payload)
+
+                body:JSON.stringify(payload)
             }
         );
 
@@ -648,12 +857,16 @@ async function updateReport(){
         alert(result.message);
 
         if(result.success){
+
             closeForm();
+
             loadReports();
         }
 
-    } catch (error) {
+    } catch(error){
+
         console.error(error);
+
         alert("Update failed.");
     }
 }
@@ -666,5 +879,6 @@ async function updateReport(){
 loadReports();
 
 </script>
+
 </body>
 </html>
