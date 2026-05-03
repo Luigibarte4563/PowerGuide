@@ -7,39 +7,60 @@ session_start();
 /* =========================================
    CHECK SESSION
 ========================================= */
-
-$user_id = $_SESSION['user']['id'] ?? null;
-
-if (!$user_id) {
-
+if (
+    !isset($_SESSION['user']['id']) ||
+    empty($_SESSION['user']['id'])
+) {
     http_response_code(401);
 
     echo json_encode([
         "success" => false,
         "message" => "Unauthorized"
     ]);
-
     exit;
 }
 
 /* =========================================
-   CALL INTERNAL API (get.php)
+   API URL
 ========================================= */
+$url = "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get_my_reports.php";
 
-$url = "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get.php?user_id=" . urlencode($user_id);
-
+/* =========================================
+   INIT CURL
+========================================= */
 $ch = curl_init($url);
 
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Content-Type: application/json"
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_HTTPHEADER => [
+        "Content-Type: application/json"
+    ],
+
+    /* IMPORTANT: keep session alive */
+    CURLOPT_COOKIE => session_name() . "=" . session_id()
 ]);
 
 $response = curl_exec($ch);
+
+/* =========================================
+   ERROR HANDLING
+========================================= */
+if (curl_errno($ch)) {
+
+    echo json_encode([
+        "success" => false,
+        "message" => "CURL Error: " . curl_error($ch)
+    ]);
+
+    exit;
+}
+
+$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
 curl_close($ch);
 
 /* =========================================
-   OUTPUT API RESPONSE
+   OUTPUT
 ========================================= */
-
+http_response_code($httpCode);
 echo $response;

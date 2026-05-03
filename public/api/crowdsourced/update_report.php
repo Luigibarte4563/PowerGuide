@@ -56,41 +56,29 @@ if (!$id) {
 }
 
 /* =========================================
-   BUILD UPDATE DATA
+   BUILD PAYLOAD (MATCH UPDATE API)
 ========================================= */
 $payload = [
-
     "id" => $id,
 
     "location_name" => $data["location_name"] ?? null,
-
     "category" => $data["category"] ?? null,
-
     "severity" => $data["severity"] ?? null,
-
     "description" => $data["description"] ?? null,
-
     "affected_houses" => $data["affected_houses"] ?? null,
-
     "status" => $data["status"] ?? null,
 
-    /* FIXED: add verification_status */
-    "verification_status" => $data["verification_status"] ?? null,
-
-    /* IMPORTANT */
-    "user_id" => $user_id
-
+    /* NEW DB FIELDS */
+    "is_active" => $data["is_active"] ?? null,
+    "hazard_type" => $data["hazard_type"] ?? null,
+    "started_at" => $data["started_at"] ?? null
 ];
 
-/* =========================================
-   REMOVE NULL VALUES
-========================================= */
-$payload = array_filter($payload, function ($value) {
-    return $value !== null;
-});
+/* remove null values */
+$payload = array_filter($payload, fn($v) => $v !== null);
 
 /* =========================================
-   API ENDPOINT
+   API URL
 ========================================= */
 $url = "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/update.php";
 
@@ -100,54 +88,29 @@ $url = "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/upd
 $ch = curl_init($url);
 
 curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-
 curl_setopt($ch, CURLOPT_POST, true);
 
-/* SEND SESSION COOKIE */
-curl_setopt(
-    $ch,
-    CURLOPT_COOKIE,
-    session_name() . '=' . session_id()
-);
+/* IMPORTANT: PASS SESSION COOKIE */
+curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . session_id());
 
 curl_setopt($ch, CURLOPT_HTTPHEADER, [
     "Content-Type: application/json"
 ]);
 
-curl_setopt(
-    $ch,
-    CURLOPT_POSTFIELDS,
-    json_encode($payload)
-);
+curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
 
-/* =========================================
-   EXECUTE
-========================================= */
 $response = curl_exec($ch);
 
 if (curl_errno($ch)) {
-
-    http_response_code(500);
 
     echo json_encode([
         "success" => false,
         "message" => curl_error($ch)
     ]);
 
-    curl_close($ch);
-
     exit;
 }
 
-$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
 curl_close($ch);
 
-/* =========================================
-   RETURN API RESPONSE
-========================================= */
-http_response_code($http_code);
-
 echo $response;
-
-?>
