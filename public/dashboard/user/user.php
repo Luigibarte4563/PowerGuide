@@ -19,6 +19,12 @@ $user = requireAuth();
 
 <body>
 
+    <nav>
+        <a href="user.php"></a>
+        <a href="create_report.php"></a>
+        <a href="update_report.php"></a>
+    </nav>
+
   <h1>Welcome <?= htmlspecialchars($user['name']) ?></h1>
 
   <?php

@@ -26,7 +26,7 @@ if (!$user_id) {
 ========================================= */
 $data = json_decode(file_get_contents("php://input"), true);
 
-if (!$data) {
+if (!$data || !is_array($data)) {
 
     http_response_code(400);
 
@@ -56,26 +56,38 @@ if (!$id) {
 }
 
 /* =========================================
-   BUILD PAYLOAD (MATCH UPDATE API)
+   BUILD CLEAN PAYLOAD (OPTIMIZED)
 ========================================= */
-$payload = [
-    "id" => $id,
 
-    "location_name" => $data["location_name"] ?? null,
-    "category" => $data["category"] ?? null,
-    "severity" => $data["severity"] ?? null,
-    "description" => $data["description"] ?? null,
-    "affected_houses" => $data["affected_houses"] ?? null,
-    "status" => $data["status"] ?? null,
-
-    /* NEW DB FIELDS */
-    "is_active" => $data["is_active"] ?? null,
-    "hazard_type" => $data["hazard_type"] ?? null,
-    "started_at" => $data["started_at"] ?? null
+$fields = [
+    "id",
+    "location_name",
+    "category",
+    "severity",
+    "description",
+    "affected_houses",
+    "status",
+    "is_active",
+    "hazard_type",
+    "started_at",
+    "latitude",
+    "longitude"
 ];
 
-/* remove null values */
-$payload = array_filter($payload, fn($v) => $v !== null);
+$payload = [];
+
+foreach ($fields as $field) {
+
+    if (isset($data[$field])) {
+
+        $value = $data[$field];
+
+        /* skip empty strings */
+        if ($value !== "" && $value !== null) {
+            $payload[$field] = $value;
+        }
+    }
+}
 
 /* =========================================
    API URL
@@ -87,30 +99,46 @@ $url = "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/upd
 ========================================= */
 $ch = curl_init($url);
 
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_POST, true);
+curl_setopt_array($ch, [
 
-/* IMPORTANT: PASS SESSION COOKIE */
-curl_setopt($ch, CURLOPT_COOKIE, session_name() . '=' . session_id());
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
 
-curl_setopt($ch, CURLOPT_HTTPHEADER, [
-    "Content-Type: application/json"
+    /* pass session */
+    CURLOPT_COOKIE         => session_name() . '=' . session_id(),
+
+    CURLOPT_HTTPHEADER     => [
+        "Content-Type: application/json"
+    ],
+
+    CURLOPT_POSTFIELDS     => json_encode($payload)
 ]);
 
-curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($payload));
-
+/* =========================================
+   EXECUTE
+========================================= */
 $response = curl_exec($ch);
 
 if (curl_errno($ch)) {
+
+    http_response_code(500);
 
     echo json_encode([
         "success" => false,
         "message" => curl_error($ch)
     ]);
 
+    curl_close($ch);
     exit;
 }
 
+$http_code = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
 curl_close($ch);
+
+/* =========================================
+   RETURN RESPONSE
+========================================= */
+http_response_code($http_code);
 
 echo $response;

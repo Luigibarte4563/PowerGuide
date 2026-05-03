@@ -1,79 +1,81 @@
-<?php
-session_start();
-$user_id = $_SESSION['user']['id'] ?? null;
-
-if (!$user_id) {
-    echo "<h3>Unauthorized. Please login first.</h3>";
-    exit;
-}
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>My Outage Reports</title>
+<meta charset="UTF-8">
+<title>My Reports</title>
 
-    <style>
-        body { font-family: Arial; padding: 20px; }
+<style>
+body{
+    font-family: Arial;
+    padding:20px;
+}
 
-        #formOverlay {
-            display:none;
-            position:fixed;
-            top:0;
-            left:0;
-            width:100%;
-            height:100%;
-            background:#000000aa;
-        }
+/* REPORT CARDS */
+.card{
+    border:1px solid #ccc;
+    padding:12px;
+    margin-bottom:10px;
+    border-radius:8px;
+}
 
-        #formOverlay > div {
-            background:#fff;
-            width:400px;
-            margin:5% auto;
-            padding:20px;
-            border-radius:10px;
-        }
+/* MODAL */
+#formOverlay{
+    display:none;
+    position:fixed;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    background:#000000aa;
+}
 
-        input, select, textarea {
-            width:100%;
-            padding:8px;
-            margin-top:8px;
-        }
+#formBox{
+    background:#fff;
+    width:450px;
+    margin:5% auto;
+    padding:20px;
+    border-radius:10px;
+}
 
-        button {
-            margin-top:10px;
-            padding:10px;
-            width:100%;
-            cursor:pointer;
-        }
+/* INPUTS */
+input, select, textarea{
+    width:100%;
+    padding:8px;
+    margin-top:8px;
+}
 
-        .card {
-            border:1px solid #ccc;
-            padding:10px;
-            margin-bottom:10px;
-            border-radius:8px;
-        }
-    </style>
+/* BUTTONS */
+button{
+    width:100%;
+    padding:10px;
+    margin-top:10px;
+    cursor:pointer;
+}
+</style>
 </head>
 
 <body>
 
 <h2>My Outage Reports</h2>
 
+<!-- =========================================
+     REPORT LIST
+========================================= -->
 <div id="list"></div>
 
-<!-- =========================
-     UPDATE MODAL
-========================= -->
+<!-- =========================================
+     EDIT MODAL
+========================================= -->
 <div id="formOverlay">
-    <div>
 
-        <h3>Update Report</h3>
+    <div id="formBox">
 
+        <h3>Edit Report</h3>
+
+        <!-- REQUIRED FIELDS -->
         <input type="hidden" id="id">
 
-        <input type="text" id="location_name" placeholder="Location">
+        <input type="text" id="location_name" placeholder="Location Name">
 
         <select id="category">
             <option value="power_outage">Power Outage</option>
@@ -92,9 +94,9 @@ if (!$user_id) {
             <option value="critical">Critical</option>
         </select>
 
-        <textarea id="description"></textarea>
+        <textarea id="description" placeholder="Description"></textarea>
 
-        <input type="number" id="affected_houses" min="1">
+        <input type="number" id="affected_houses" placeholder="Affected Houses">
 
         <select id="status">
             <option value="unverified">Unverified</option>
@@ -119,99 +121,249 @@ if (!$user_id) {
             <option value="explosion_sound">Explosion Sound</option>
         </select>
 
-        <button onclick="updateReport()">Save Changes</button>
-        <button onclick="closeForm()">Cancel</button>
+        <!-- GPS -->
+        <input type="hidden" id="latitude">
+        <input type="hidden" id="longitude">
+
+        <!-- ACTION BUTTONS -->
+        <button type="button" onclick="useCurrentLocation()">
+            Use Current Location
+        </button>
+
+        <button type="button" onclick="updateReport()">
+            Update Report
+        </button>
+
+        <button type="button" onclick="closeForm()">
+            Close
+        </button>
 
     </div>
+
 </div>
 
+</body>
+</html>
 <script>
 
-/* ==============================
-   LOAD ONLY MY REPORTS
-============================== */
+/* =========================================
+   TRACK ORIGINAL LOCATION
+========================================= */
+
+let originalLocation = "";
+let locationChanged = false;
+
+/* =========================================
+   LOAD REPORTS (FAST RENDER)
+========================================= */
+
 async function loadReports(){
 
+    const list = document.getElementById("list");
+    list.innerHTML = "<p>Loading...</p>";
+
     try {
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
 
         const res = await fetch(
             "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get_my_report.php",
             {
                 method: "GET",
-                credentials: "include" // 🔥 SESSION REQUIRED
+                credentials: "include",
+                signal: controller.signal
             }
         );
 
+        clearTimeout(timeout);
+
         const result = await res.json();
 
-        const list = document.getElementById("list");
-
-        if (!result.success) {
-            list.innerHTML = "No reports found or unauthorized.";
+        if(!result.success){
+            list.innerHTML = "<p>Failed to load reports</p>";
             return;
         }
 
-        list.innerHTML = "";
+        if(!result.data.length){
+            list.innerHTML = "<p>No reports found</p>";
+            return;
+        }
 
-        result.data.forEach(r => {
+        /* FAST DOM RENDER */
+        list.innerHTML = result.data.map(r => {
 
-            list.innerHTML += `
+            const safeData = JSON.stringify(r)
+                .replace(/"/g, "&quot;");
+
+            return `
                 <div class="card">
                     <h3>${r.location_name}</h3>
                     <p>${r.description}</p>
-
                     <small>
                         ${r.category} | ${r.severity} | ${r.status}
                     </small>
-
-                    <br><br>
-
-                    <button onclick='editReport(${JSON.stringify(r).replace(/'/g, "&apos;")})'>
+                    <br>
+                    <button onclick='editReport(${safeData})'>
                         Edit
                     </button>
                 </div>
             `;
-        });
 
-    } catch (error) {
+        }).join("");
+
+    } catch(error){
+
         console.error(error);
-        document.getElementById("list").innerHTML = "Server error.";
+
+        list.innerHTML = error.name === "AbortError"
+            ? "<p>Request timed out</p>"
+            : "<p>Server error</p>";
     }
 }
 
-/* ==============================
-   OPEN EDIT FORM
-============================== */
+
+/* =========================================
+   OPEN EDIT FORM (SAFE BINDING)
+========================================= */
+
 function editReport(r){
 
-    document.getElementById("formOverlay").style.display = "block";
+    const set = (id, value) => {
+        const el = document.getElementById(id);
+        if(el) el.value = value ?? "";
+    };
 
-    document.getElementById("id").value = r.id;
-    document.getElementById("location_name").value = r.location_name;
-    document.getElementById("category").value = r.category;
-    document.getElementById("severity").value = r.severity;
-    document.getElementById("description").value = r.description;
-    document.getElementById("affected_houses").value = r.affected_houses;
-    document.getElementById("status").value = r.status;
-    document.getElementById("is_active").value = r.is_active;
-    document.getElementById("hazard_type").value = r.hazard_type;
+    set("id", r.id);
+    set("location_name", r.location_name);
+    set("category", r.category);
+    set("severity", r.severity);
+    set("description", r.description);
+    set("affected_houses", r.affected_houses);
+    set("status", r.status);
+    set("is_active", r.is_active || "unknown");
+    set("hazard_type", r.hazard_type || "none");
+    set("latitude", r.latitude);
+    set("longitude", r.longitude);
+
+    originalLocation = r.location_name || "";
+    locationChanged = false;
+
+    document.getElementById("formOverlay").style.display = "block";
 }
 
-/* ==============================
-   CLOSE FORM
-============================== */
+
+/* =========================================
+   LOCATION CHANGE DETECTION (FIXED)
+========================================= */
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    const input = document.getElementById("location_name");
+
+    if(input){
+
+        input.addEventListener("input", () => {
+
+            locationChanged =
+                input.value.trim() !== originalLocation;
+        });
+    }
+});
+
+
+/* =========================================
+   FAST GEOLOCATION (NON-BLOCKING UX)
+========================================= */
+
+async function useCurrentLocation(){
+
+    navigator.geolocation.getCurrentPosition(
+
+        async (pos) => {
+
+            const lat = pos.coords.latitude;
+            const lng = pos.coords.longitude;
+
+            document.getElementById("latitude").value = lat;
+            document.getElementById("longitude").value = lng;
+
+            locationChanged = true;
+
+            const field = document.getElementById("location_name");
+
+            /* SHOW COORDS INSTANTLY */
+            field.value = `${lat}, ${lng}`;
+
+            /* SKIP if user already manually edited AFTER original */
+            if(field.value.trim() !== "" && field.value !== originalLocation){
+                return;
+            }
+
+            /* BACKGROUND GEOCODING (NON-BLOCKING) */
+            try {
+
+                const controller = new AbortController();
+                const timeout = setTimeout(() => controller.abort(), 3000);
+
+                const res = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=16&addressdetails=1`,
+                    {
+                        signal: controller.signal,
+                        headers: { "Accept-Language": "en" }
+                    }
+                );
+
+                clearTimeout(timeout);
+
+                const data = await res.json();
+                const a = data.address || {};
+
+                const shortLocation = [
+                    a.road,
+                    a.suburb,
+                    a.city || a.town || a.village,
+                    a.state
+                ].filter(Boolean).join(", ");
+
+                field.value = shortLocation || data.display_name || `${lat}, ${lng}`;
+
+            } catch(error){
+                console.error(error);
+            }
+        },
+
+        (error) => {
+            console.error(error);
+            alert("Failed to get location");
+        },
+
+        {
+            enableHighAccuracy: false,
+            timeout: 5000,
+            maximumAge: 60000
+        }
+    );
+}
+
+
+/* =========================================
+   CLOSE MODAL
+========================================= */
+
 function closeForm(){
     document.getElementById("formOverlay").style.display = "none";
 }
 
-/* ==============================
-   UPDATE REPORT
-============================== */
+
+/* =========================================
+   UPDATE REPORT (OPTIMIZED PAYLOAD)
+========================================= */
+
 async function updateReport(){
 
     const payload = {
         id: document.getElementById("id").value,
-        location_name: document.getElementById("location_name").value,
         category: document.getElementById("category").value,
         severity: document.getElementById("severity").value,
         description: document.getElementById("description").value,
@@ -221,13 +373,24 @@ async function updateReport(){
         hazard_type: document.getElementById("hazard_type").value
     };
 
+    /* SEND LOCATION ONLY IF CHANGED */
+    if(locationChanged){
+        payload.location_name = document.getElementById("location_name").value;
+        payload.latitude = document.getElementById("latitude").value || null;
+        payload.longitude = document.getElementById("longitude").value || null;
+    }
+
     try {
 
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 8000);
+
         const res = await fetch(
-            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/update_report.php",
+            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/update.php",
             {
                 method: "POST",
                 credentials: "include",
+                signal: controller.signal,
                 headers: {
                     "Content-Type": "application/json"
                 },
@@ -235,25 +398,33 @@ async function updateReport(){
             }
         );
 
+        clearTimeout(timeout);
+
         const result = await res.json();
 
         alert(result.message);
 
-        if (result.success) {
+        if(result.success){
             closeForm();
             loadReports();
         }
 
-    } catch (error) {
+    } catch(error){
+
         console.error(error);
-        alert("Update failed");
+
+        alert(error.name === "AbortError"
+            ? "Request timed out"
+            : "Update failed"
+        );
     }
 }
 
-/* INIT */
+
+/* =========================================
+   INIT
+========================================= */
+
 loadReports();
 
 </script>
-
-</body>
-</html>
