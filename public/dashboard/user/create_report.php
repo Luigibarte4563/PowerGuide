@@ -15,6 +15,7 @@ require_once __DIR__ . '/../../../src/middleware/requireAuth.php';
 $user = requireAuth();
 ?>
 
+
 <h2>Welcome, <?= htmlspecialchars($user['name']) ?></h2>
 
 <form id="outageForm">

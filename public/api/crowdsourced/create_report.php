@@ -25,6 +25,7 @@ $url = "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/cre
 $location_name = $_POST['location_name'] ?? null;
 $category      = $_POST['category'] ?? "power_outage";
 $severity      = $_POST['severity'] ?? "moderate";
+$image_proof     = $data["image_proof"] ?? null;
 $description   = $_POST['description'] ?? null;
 
 $affected_houses = $_POST['affected_houses'] ?? 1;
@@ -50,6 +51,7 @@ $data = [
     "location_name" => $location_name,
     "category" => $category,
     "severity" => $severity,
+    "image_proof" => $image_proof,
     "description" => $description,
     "affected_houses" => (int)$affected_houses,
     "is_active" => $is_active,
