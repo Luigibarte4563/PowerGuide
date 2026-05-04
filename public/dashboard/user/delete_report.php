@@ -53,7 +53,7 @@ async function loadReports(){
     try {
 
         const res = await fetch(
-            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get_my_report.php",
+            "http://localhost/crowdsourcedapi/api/outage_report/get_my_report.php",
             {
                 method: "GET",
                 credentials: "include"

@@ -168,7 +168,7 @@ async function loadReports(){
         const timeout = setTimeout(() => controller.abort(), 8000);
 
         const res = await fetch(
-            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get_my_report.php",
+            "http://localhost/crowdsourcedapi/api/outage_report/get_my_report.php",
             {
                 method: "GET",
                 credentials: "include",
@@ -386,7 +386,7 @@ async function updateReport(){
         const timeout = setTimeout(() => controller.abort(), 8000);
 
         const res = await fetch(
-            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/update.php",
+            "http://localhost/crowdsourcedapi/api/outage_report/update.php",
             {
                 method: "POST",
                 credentials: "include",

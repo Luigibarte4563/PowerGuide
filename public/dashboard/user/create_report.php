@@ -140,7 +140,7 @@ document.getElementById("outageForm").addEventListener("submit", async (e) => {
 
     try {
         const res = await fetch(
-            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/create.php",
+            "http://localhost/crowdsourcedapi/api/outage_report/create.php",
             {
                 method: "POST",
                 credentials: "include",
@@ -173,7 +173,7 @@ async function loadReports(){
     try{
 
         const response = await fetch(
-            "http://localhost/crowdsourced-outage-reporting-api/api/outage_report/get.php"
+            "http://localhost/crowdsourcedapi/api/outage_report/get.php"
         );
 
         const result = await response.json();

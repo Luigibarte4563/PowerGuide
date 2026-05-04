@@ -83,7 +83,7 @@ async function loadData(){
     try {
 
         const res = await fetch(
-            "http://localhost/powerguide/public/api/crowdsourced/get_reports.php",
+            "http://localhost/crowdsourcedapi/api/outage_report/get.php",
             {
                 method: "GET",
                 credentials: "include"
