@@ -167,23 +167,21 @@ CREATE TABLE power_stations (
 
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
+-- 🔍 filter by type (solar, charging, etc.)
+CREATE INDEX idx_station_type ON power_stations(station_type);
+
+-- ⚡ availability filtering (very common in dashboards)
+CREATE INDEX idx_availability ON power_stations(availability_status);
+
+-- 📍 location-based search (map + radius queries)
+CREATE INDEX idx_station_location ON power_stations(latitude, longitude);
+
+-- 👤 user/company lookup
+CREATE INDEX idx_created_by ON power_stations(created_by);
 
 -- =====================================
 -- REPORT CONFIRMATIONS
 -- =====================================
-CREATE TABLE report_confirmations (
-
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    report_id INT,
-    user_id INT,
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    UNIQUE(report_id, user_id),
-
-    FOREIGN KEY (report_id) REFERENCES outage_reports(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
 
 -- =====================================
 -- MAINTENANCE SCHEDULES (UPDATED FOR NOTIFICATIONS)
