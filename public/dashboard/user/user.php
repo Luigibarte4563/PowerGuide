@@ -15,41 +15,66 @@ $user = requireAuth();
 <head>
   <meta charset="UTF-8">
   <title>Dashboard</title>
+
+  <style>
+    body {
+      font-family: Arial;
+    }
+
+    .box {
+      padding: 15px;
+      border: 1px solid #ccc;
+      margin-top: 10px;
+      width: 400px;
+    }
+
+    button {
+      padding: 8px 12px;
+      cursor: pointer;
+    }
+
+    #response {
+      margin-top: 10px;
+      font-weight: bold;
+    }
+  </style>
+
 </head>
 
 <body>
 
-    <nav>
-        <a href="user.php"></a>
-        <a href="create_report.php"></a>
-        <a href="update_report.php"></a>
-    </nav>
+<nav>
+    <a href="user.php">Home</a> |
+    <a href="create_report.php">Create Report</a> |
+    <a href="update_report.php">Update Report</a>
+</nav>
 
-  <h1>Welcome <?= htmlspecialchars($user['name']) ?></h1>
+<h1>Welcome <?= htmlspecialchars($user['name']) ?></h1>
 
-  <?php
-    $defaultPicture = "https://scontent.fbag1-2.fna.fbcdn.net/v/t1.15752-9/667329625_832141525960325_566936363299643684_n.jpg";
+<?php
+$defaultPicture = "https://scontent.fbag1-2.fna.fbcdn.net/v/t1.15752-9/667329625_832141525960325_566936363299643684_n.jpg";
 
-    $picture = !empty($user['picture'])
-        ? $user['picture']
-        : $defaultPicture;
-  ?>
+$picture = !empty($user['picture'])
+    ? $user['picture']
+    : $defaultPicture;
+?>
 
-  <!-- PROFILE IMAGE -->
-  <img src="<?= htmlspecialchars($picture) ?>" width="120" height="120" style="border-radius:50%;">
+<img src="<?= htmlspecialchars($picture) ?>" width="120" height="120" style="border-radius:50%;">
 
-  <br><br>
+<br><br>
 
-  <a href="<?= BASE_URL ?>/logout.php">Logout</a>
+<a href="<?= BASE_URL ?>/logout.php">Logout</a>
 
-  <!-- =========================================
-       PROFILE UPDATE
-  ========================================= -->
-  <h2>Edit Profile</h2>
+<hr>
 
-  <form action="<?= BASE_URL ?>/api/user/update_profile.php"
-        method="POST"
-        enctype="multipart/form-data">
+<!-- =========================================
+     PROFILE UPDATE
+========================================= -->
+<h2>Edit Profile</h2>
+
+<form action="<?= BASE_URL ?>/api/user/update_profile.php"
+      method="POST"
+      enctype="multipart/form-data">
 
     <input type="text" name="name"
            value="<?= htmlspecialchars($user['name']) ?>"
@@ -63,43 +88,135 @@ $user = requireAuth();
 
     <button type="submit">Update Profile</button>
 
-  </form>
+</form>
 
-  <!-- =========================================
-       PASSWORD
-  ========================================= -->
-  <?php if ($user['auth_provider'] !== 'google'): ?>
+<hr>
 
-    <h2>Change Password</h2>
+<!-- =========================================
+     LOCATION INPUT
+========================================= -->
+<div class="box">
 
-    <form action="<?= BASE_URL ?>/api/user/update_password.php" method="POST">
+  <h2>📍 Set Your Location</h2>
 
-        <input type="password"
-               name="current_password"
-               placeholder="Current Password"
-               required><br><br>
+  <input type="text" id="location_name"
+         placeholder="e.g. Bonuan Gueset, Dagupan City"
+         style="width:100%; padding:8px;">
 
-        <input type="password"
-               name="new_password"
-               placeholder="New Password"
-               required><br><br>
+  <br><br>
 
-        <input type="password"
-               name="confirm_password"
-               placeholder="Confirm New Password"
-               required><br><br>
+  <button onclick="updateLocation()">Save Location</button>
 
-        <button type="submit">Update Password</button>
+  <div id="response"></div>
 
-    </form>
+</div>
 
-  <?php else: ?>
+<!-- =========================================
+     DISPLAY LOCATION
+========================================= -->
+<div class="box">
 
-    <h2>Security</h2>
-    <p style="color:gray;">
-        You are logged in using Google. Password management is handled by Google.
-    </p>
+  <h3>📍 Your Current Location</h3>
 
-  <?php endif; ?>
+  <p id="current_location">Loading...</p>
+  <p id="current_barangay"></p>
 
-  
+</div>
+
+<script>
+
+/* =========================================
+   LOAD SAVED LOCATION
+========================================= */
+async function loadLocation() {
+
+    try {
+        const res = await fetch(
+            "http://localhost/crowdsourcedapi/api/user_location/get.php"
+        );
+
+        const data = await res.json();
+
+        if (data.success && data.data) {
+
+            document.getElementById("current_location").innerText =
+                "📍 " + data.data.location_name;
+
+            document.getElementById("current_barangay").innerText =
+                "🏘️ Barangay: " + (data.data.barangay ?? "Unknown");
+
+            document.getElementById("location_name").value =
+                data.data.location_name;
+
+        } else {
+            document.getElementById("current_location").innerText =
+                "No location saved yet.";
+
+            document.getElementById("current_barangay").innerText = "";
+        }
+
+    } catch (err) {
+        console.error(err);
+        document.getElementById("current_location").innerText =
+            "Failed to load location.";
+    }
+}
+
+/* =========================================
+   SAVE LOCATION
+========================================= */
+async function updateLocation() {
+
+    const location = document.getElementById("location_name").value;
+    const responseBox = document.getElementById("response");
+
+    if (!location) {
+        responseBox.style.color = "red";
+        responseBox.innerText = "Please enter a location.";
+        return;
+    }
+
+    try {
+        const res = await fetch(
+            "http://localhost/crowdsourcedapi/api/user_location/location.php",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    location_name: location
+                })
+            }
+        );
+
+        const data = await res.json();
+
+        if (data.success) {
+
+            responseBox.style.color = "green";
+            responseBox.innerText =
+                "Location saved! Barangay: " +
+                (data.data?.barangay ?? "Unknown");
+
+            // refresh display
+            loadLocation();
+
+        } else {
+            responseBox.style.color = "red";
+            responseBox.innerText = data.message;
+        }
+
+    } catch (error) {
+        responseBox.style.color = "red";
+        responseBox.innerText = "Server error. Try again.";
+    }
+}
+
+/* INIT */
+loadLocation();
+
+</script>
+
+</body>
+</html>

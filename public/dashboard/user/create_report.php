@@ -121,6 +121,47 @@ function useCurrentLocation(){
 }
 
 /* ==============================
+   PIN LOCATION ON MAP CLICK
+============================== */
+map.on('click', async function(e){
+
+    const lat = e.latlng.lat;
+    const lng = e.latlng.lng;
+
+    // Store coordinates
+    document.getElementById("latitude").value = lat;
+    document.getElementById("longitude").value = lng;
+
+    // Remove old marker
+    if(marker) map.removeLayer(marker);
+
+    // Add new marker
+    marker = L.marker([lat, lng], { icon: outageIcon })
+        .addTo(map)
+        .bindPopup("Pinned Location")
+        .openPopup();
+
+    // Reverse geocoding (get location name)
+    try {
+        const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`
+        );
+
+        const data = await res.json();
+
+        document.getElementById("location_name").value =
+            data.display_name || `${lat}, ${lng}`;
+
+    } catch (err) {
+        console.error("Reverse geocoding failed", err);
+
+        // fallback if API fails
+        document.getElementById("location_name").value = `${lat}, ${lng}`;
+    }
+
+});
+
+/* ==============================
    CREATE REPORT
 ============================== */
 document.getElementById("outageForm").addEventListener("submit", async (e) => {

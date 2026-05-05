@@ -108,25 +108,25 @@ async function deleteReport(id){
     try {
 
         const res = await fetch(
-            "http://localhost/powerguide/public/api/crowdsourced/delete_report.php", // your PHP CURL proxy
-            {
-                method: "POST",
-                credentials: "include",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: new URLSearchParams({
-                    id: id
-                })
-            }
-        );
+    "http://localhost/crowdsourcedapi/api/outage_report/delete.php",
+    {
+        method: "POST",
+        credentials: "include",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ id: id })
+    }
+);
 
         const result = await res.json();
 
-        alert(result.message);
+        console.log(result);
+
+        alert(result.message ?? "No response message");
 
         if(result.success){
-            loadReports(); // refresh list
+            loadReports();
         }
 
     } catch(err){
