@@ -2,7 +2,7 @@ CREATE DATABASE powerguide;
 USE powerguide;
 
 -- =====================================
--- USERS (UPDATED: LOCATION ADDED)
+-- USERS (WITH LOCATION)
 -- =====================================
 CREATE TABLE users (
 
@@ -29,11 +29,14 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    -- 🔥 NEW: user geo-location (FOR NOTIFICATIONS)
-    location_name VARCHAR(255) NULL;
+    -- LOCATION (FOR NOTIFICATIONS)
+    location_name VARCHAR(255) NULL,
     latitude DECIMAL(10,8) NULL,
     longitude DECIMAL(11,8) NULL
 );
+
+-- INDEX FOR LOCATION
+CREATE INDEX idx_user_location ON users(latitude, longitude);
 
 -- =====================================
 -- ELECTRIC COMPANIES
@@ -81,7 +84,46 @@ CREATE TABLE company_applications (
 );
 
 -- =====================================
--- OUTAGE REPORTS (UPDATED LINK SUPPORT)
+-- MAINTENANCE SCHEDULES
+-- =====================================
+CREATE TABLE maintenance_schedules (
+
+    id INT AUTO_INCREMENT PRIMARY KEY,
+
+    electric_company_id INT,
+
+    affected_area VARCHAR(255) NOT NULL,
+
+    latitude DECIMAL(10,8),
+    longitude DECIMAL(11,8),
+
+    radius INT DEFAULT 2000,
+
+    maintenance_date DATE NOT NULL,
+    start_time TIME NOT NULL,
+    end_time TIME NOT NULL,
+
+    description TEXT,
+    estimated_restoration_time DATETIME NULL,
+
+    status ENUM('upcoming','ongoing','completed','cancelled') DEFAULT 'upcoming',
+
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    FOREIGN KEY (electric_company_id)
+        REFERENCES electric_companies(id)
+        ON DELETE CASCADE
+);
+
+-- INDEXES FOR MAINTENANCE
+CREATE INDEX idx_maintenance_location 
+ON maintenance_schedules(latitude, longitude);
+
+CREATE INDEX idx_maintenance_company 
+ON maintenance_schedules(electric_company_id);
+
+-- =====================================
+-- OUTAGE REPORTS
 -- =====================================
 CREATE TABLE outage_reports (
 
@@ -119,14 +161,18 @@ CREATE TABLE outage_reports (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
-    -- 🔥 OPTIONAL LINK TO MAINTENANCE
+    -- LINK TO MAINTENANCE
     maintenance_id INT NULL,
 
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL
+    FOREIGN KEY (verified_by) REFERENCES users(id) ON DELETE SET NULL,
+
+    FOREIGN KEY (maintenance_id)
+        REFERENCES maintenance_schedules(id)
+        ON DELETE SET NULL
 );
 
--- INDEXES (IMPORTANT FOR SPEED)
+-- INDEXES FOR OUTAGE REPORTS
 CREATE INDEX idx_user_id ON outage_reports(user_id);
 CREATE INDEX idx_status ON outage_reports(status);
 CREATE INDEX idx_location ON outage_reports(latitude, longitude);
@@ -167,57 +213,15 @@ CREATE TABLE power_stations (
 
     FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
 );
--- 🔍 filter by type (solar, charging, etc.)
+
+-- INDEXES FOR POWER STATIONS
 CREATE INDEX idx_station_type ON power_stations(station_type);
-
--- ⚡ availability filtering (very common in dashboards)
 CREATE INDEX idx_availability ON power_stations(availability_status);
-
--- 📍 location-based search (map + radius queries)
 CREATE INDEX idx_station_location ON power_stations(latitude, longitude);
-
--- 👤 user/company lookup
 CREATE INDEX idx_created_by ON power_stations(created_by);
 
 -- =====================================
--- REPORT CONFIRMATIONS
--- =====================================
-
--- =====================================
--- MAINTENANCE SCHEDULES (UPDATED FOR NOTIFICATIONS)
--- =====================================
-CREATE TABLE maintenance_schedules (
-
-    id INT AUTO_INCREMENT PRIMARY KEY,
-
-    electric_company_id INT,
-
-    affected_area VARCHAR(255) NOT NULL,
-
-    latitude DECIMAL(10,8),
-    longitude DECIMAL(11,8),
-
-    -- 🔥 NEW: notification radius (meters)
-    radius INT DEFAULT 2000,
-
-    maintenance_date DATE NOT NULL,
-    start_time TIME NOT NULL,
-    end_time TIME NOT NULL,
-
-    description TEXT,
-    estimated_restoration_time DATETIME NULL,
-
-    status ENUM('upcoming','ongoing','completed','cancelled') DEFAULT 'upcoming',
-
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-
-    FOREIGN KEY (electric_company_id)
-        REFERENCES electric_companies(id)
-        ON DELETE CASCADE
-);
-
--- =====================================
--- NOTIFICATIONS (NEW - REQUIRED FOR ALERT SYSTEM)
+-- NOTIFICATIONS
 -- =====================================
 CREATE TABLE notifications (
 
@@ -238,6 +242,10 @@ CREATE TABLE notifications (
         REFERENCES users(id)
         ON DELETE CASCADE
 );
+
+-- INDEXES FOR NOTIFICATIONS
+CREATE INDEX idx_notif_user ON notifications(user_id);
+CREATE INDEX idx_notif_read ON notifications(is_read);
 
 -- =====================================
 -- ADMIN LOGS

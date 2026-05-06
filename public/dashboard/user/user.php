@@ -17,16 +17,14 @@ $user = requireAuth();
 <title>User Dashboard</title>
 
 <style>
-    body {
-        font-family: Arial;
-    }
+    body { font-family: Arial; }
 
     nav {
         display: flex;
         justify-content: space-between;
-        align-items: center;
         padding: 10px;
         background: #f4f4f4;
+        align-items: center;
     }
 
     .notif-wrapper {
@@ -72,14 +70,15 @@ $user = requireAuth();
 
     .box {
         padding: 15px;
-        border: 1px solid #ccc;
+        border: 1px solid #ddd;
         margin-top: 10px;
-        width: 400px;
+        width: 420px;
     }
 
     button {
         padding: 8px 12px;
         cursor: pointer;
+        margin-top: 5px;
     }
 </style>
 
@@ -87,39 +86,29 @@ $user = requireAuth();
 
 <body>
 
-<!-- ================= NAVBAR ================= -->
+<!-- NAV -->
 <nav>
 
     <div>
         <a href="user.php">Home</a> |
-        <a href="create_report.php">Create Report</a> |
-        <a href="update_report.php">Update Report</a>
+        <a href="reports/create_report.php">Create Report</a> |
+        <a href="reports/update_report.php">Update Report</a>
     </div>
 
-    <!-- NOTIFICATIONS -->
     <div class="notif-wrapper">
-
-        <button onclick="toggleNotifications()">
-            🔔 Notifications
-        </button>
-
+        <button onclick="toggleNotifications()">🔔 Notifications</button>
         <span id="notifCount"></span>
-
         <div id="notifPanel"></div>
-
     </div>
 
 </nav>
 
-<!-- ================= USER INFO ================= -->
+<!-- USER -->
 <h1>Welcome <?= htmlspecialchars($user['name']) ?></h1>
 
 <?php
 $defaultPicture = "https://scontent.fbag1-2.fna.fbcdn.net/v/t1.15752-9/667329625_832141525960325_566936363299643684_n.jpg";
-
-$picture = !empty($user['picture'])
-    ? $user['picture']
-    : $defaultPicture;
+$picture = !empty($user['picture']) ? $user['picture'] : $defaultPicture;
 ?>
 
 <img src="<?= htmlspecialchars($picture) ?>" width="120" height="120" style="border-radius:50%;">
@@ -130,58 +119,56 @@ $picture = !empty($user['picture'])
 
 <hr>
 
-<!-- ================= PROFILE ================= -->
+<!-- PROFILE -->
 <h2>Edit Profile</h2>
 
 <form action="<?= BASE_URL ?>/api/user/update_profile.php"
       method="POST"
       enctype="multipart/form-data">
 
-    <input type="text" name="name"
-           value="<?= htmlspecialchars($user['name']) ?>" required><br><br>
-
-    <input type="email" name="email"
-           value="<?= htmlspecialchars($user['email']) ?>" required><br><br>
-
-    <input type="file" name="picture" accept="image/*"><br><br>
+    <input type="text" name="name" value="<?= htmlspecialchars($user['name']) ?>" required><br><br>
+    <input type="email" name="email" value="<?= htmlspecialchars($user['email']) ?>" required><br><br>
+    <input type="file" name="picture"><br><br>
 
     <button type="submit">Update Profile</button>
-
 </form>
 
 <hr>
 
-<!-- ================= LOCATION ================= -->
+<!-- LOCATION -->
 <div class="box">
 
-  <h2>📍 Set Your Location</h2>
+    <h2>📍 Set Your Location</h2>
 
-  <input type="text" id="location_name"
-         placeholder="Enter location"
-         style="width:100%; padding:8px;">
+    <input type="text" id="location_name"
+           placeholder="Enter location"
+           style="width:100%; padding:8px;">
 
-  <br><br>
+    <button onclick="updateLocation()">Save Location</button>
 
-  <button onclick="updateLocation()">Save Location</button>
+    <button onclick="useCurrentLocation()"
+            style="background:#007bff;color:white;">
+        📍 Use My Current Location
+    </button>
 
-  <div id="response"></div>
+    <div id="response"></div>
 
 </div>
 
 <div class="box">
 
-  <h3>📍 Current Location</h3>
+    <h3>📍 Current Location</h3>
 
-  <p id="current_location">Loading...</p>
-  <p id="current_barangay"></p>
+    <p id="current_location">Loading...</p>
+    <p id="current_coords"></p>
 
 </div>
 
 <script>
 
-/* ================= NOTIFICATIONS ================= */
 let notifications = [];
 
+/* ================= NOTIFICATIONS ================= */
 async function loadNotifications() {
 
     try {
@@ -192,11 +179,9 @@ async function loadNotifications() {
         );
 
         const data = await res.json();
-
         if (!data.success) return;
 
         notifications = data.data;
-
         renderNotifications();
 
     } catch (err) {
@@ -211,98 +196,78 @@ function renderNotifications() {
 
     const unread = notifications.filter(n => n.is_read == 0);
 
-    if (unread.length > 0) {
-        badge.style.display = "inline-block";
-        badge.innerText = unread.length;
-    } else {
-        badge.style.display = "none";
-    }
+    badge.style.display = unread.length ? "inline-block" : "none";
+    badge.innerText = unread.length;
 
-    panel.innerHTML = notifications.length === 0
-        ? "<div style='padding:10px'>No notifications</div>"
-        : notifications.map(n => `
+    panel.innerHTML = notifications.length
+        ? notifications.map(n => `
             <div class="notif-item ${n.is_read == 0 ? 'unread' : ''}"
                  onclick="markAsRead(${n.id})">
-
                 <b>${n.title}</b><br>
-                <small>${n.message}</small><br>
-                <small>${n.created_at}</small>
-
+                <small>${n.message}</small>
             </div>
-        `).join("");
+        `).join("")
+        : "<div style='padding:10px'>No notifications</div>";
 }
 
 function toggleNotifications() {
-
     const panel = document.getElementById("notifPanel");
-
-    panel.style.display =
-        panel.style.display === "block" ? "none" : "block";
-
+    panel.style.display = panel.style.display === "block" ? "none" : "block";
     loadNotifications();
 }
 
 async function markAsRead(id) {
 
-    try {
-
-        const res = await fetch(
-            "http://localhost/crowdsourcedapi/api/notifications/mark_as_read.php",
-            {
-                method: "POST",
-                credentials: "include",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id })
-            }
-        );
-
-        const result = await res.json();
-
-        if (result.success) {
-
-            notifications = notifications.map(n =>
-                n.id === id ? { ...n, is_read: 1 } : n
-            );
-
-            renderNotifications();
+    await fetch(
+        "http://localhost/crowdsourcedapi/api/notifications/mark_as_read.php",
+        {
+            method: "POST",
+            credentials: "include",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({id})
         }
+    );
 
-    } catch (err) {
-        console.error(err);
-    }
+    notifications = notifications.map(n =>
+        n.id === id ? {...n, is_read: 1} : n
+    );
+
+    renderNotifications();
 }
 
-/* AUTO REFRESH */
-loadNotifications();
-setInterval(loadNotifications, 15000);
-
-/* ================= LOCATION (UNCHANGED) ================= */
+/* ================= LOAD LOCATION ================= */
 async function loadLocation() {
 
     try {
+
         const res = await fetch(
-            "http://localhost/crowdsourcedapi/api/user_location/get.php"
+            "http://localhost/crowdsourcedapi/api/user_location/get.php",
+            { credentials: "include" }
         );
 
         const data = await res.json();
 
-        if (data.success && data.data) {
-
+        if (!data.success) {
             document.getElementById("current_location").innerText =
-                "📍 " + data.data.location_name;
-
-            document.getElementById("current_barangay").innerText =
-                "🏘️ Barangay: " + (data.data.barangay ?? "Unknown");
-
-            document.getElementById("location_name").value =
-                data.data.location_name;
+                data.message;
+            return;
         }
+
+        document.getElementById("current_location").innerText =
+            "📍 " + (data.data.location_name || "No location");
+
+        document.getElementById("current_coords").innerText =
+            `📌 Lat: ${data.data.latitude ?? "-"} | Lng: ${data.data.longitude ?? "-"}`;
+
+        document.getElementById("location_name").value =
+            data.data.location_name || "";
 
     } catch (err) {
         console.error(err);
     }
 }
 
+/* ================= MANUAL LOCATION ================= */
 async function updateLocation() {
 
     const location = document.getElementById("location_name").value;
@@ -313,19 +278,68 @@ async function updateLocation() {
         "http://localhost/crowdsourcedapi/api/user_location/location.php",
         {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ location_name: location })
+            credentials: "include",
+            headers: {"Content-Type":"application/json"},
+            body: JSON.stringify({
+                location_name: location,
+                from_gps: false
+            })
         }
     );
 
     const data = await res.json();
 
-    if (data.success) {
-        loadLocation();
-    }
+    if (data.success) loadLocation();
+    else alert(data.message);
 }
 
+/* ================= GPS LOCATION ================= */
+function useCurrentLocation() {
+
+    if (!navigator.geolocation) {
+        alert("Geolocation not supported");
+        return;
+    }
+
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+
+        const latitude = pos.coords.latitude;
+        const longitude = pos.coords.longitude;
+
+        const res = await fetch(
+            "http://localhost/crowdsourcedapi/api/user_location/location.php",
+            {
+                method: "POST",
+                credentials: "include",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({
+                    location_name: "My Current Location",
+                    latitude,
+                    longitude,
+                    from_gps: true
+                })
+            }
+        );
+
+        const data = await res.json();
+
+        if (data.success) {
+            alert("GPS location saved");
+            loadLocation();
+        } else {
+            alert(data.message);
+        }
+
+    }, () => {
+        alert("Please allow location access");
+    });
+}
+
+/* ================= INIT ================= */
 loadLocation();
+loadNotifications();
+
+setInterval(loadNotifications, 15000);
 
 </script>
 
